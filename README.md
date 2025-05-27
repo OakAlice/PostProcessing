@@ -1,0 +1,4 @@
+# Post-Processing
+In animal accelerometer-based behavioural classification research, the majority of the attention has (understandably) been placed on the collection of the data and the building of the models with relatively little attention given to what to do with the data once we have it. At the moment, the traditional analysis styles are activity budgets as %'s of days or hours, counts of single behaviours, or averaging to active/inactive periods. Some papers pull out continuous sequences of particualr behaviours for detailed analysis. But there is no verified and agreed-upon method. 
+
+In this chapter I am going to experiment with different post-processing workflows to find a helpful protcol for managing the predictions resulting from accelerometers.
