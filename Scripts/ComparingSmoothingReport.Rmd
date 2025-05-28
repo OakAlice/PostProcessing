@@ -8,13 +8,13 @@ params:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, fig.width = 8, fig.height = 6)
 ```
 
 This is the report to compare the various smoothing methods I tried. This is the first version of the report. It is very preliminary. I hope to build on this more in future.
 
 Step 1 is to find all the smoothing types that have been tried and load in their data to a consolidated file.
-```{r find what's been done, include = FALSE}
+```{r bind, include = FALSE}
 metrics_list <- list.files(
   file.path(base_path, "Output", species),
   pattern = "*?.csv",
@@ -33,4 +33,41 @@ metrics <- bind_rows(metrics) %>%
     smoothing_type = gsub("_performance.csv", "", smoothing_type)
   )
 
+# add levels so its easier to plot later
+metrics$smoothing_type <- factor(metrics$smoothing_type, levels = c("NoSmoothing", "BasicSmoothing", "DurationSmoothing"))
+
 ```
+
+Step 2 is to compare these results. Not all trials will have all types, so just compare what's there.
+```{r compare}
+# its hard to make any one single judgement, so I can make a plot for now
+
+metrics_long <- metrics %>%
+  pivot_longer(cols = c(Precision, Recall, F1, Accuracy), 
+               names_to = "Metric", 
+               values_to = "Score")
+
+# Plot
+ggplot(metrics_long, aes(x = Activity, y = Score, fill = smoothing_type)) +
+  geom_point(stat = "identity", size = 3, shape = 21, colour = "white") +
+  facet_wrap(~ Metric, scales = "free_y", ncol = 2) +
+  scale_fill_manual(values = my_colours) +
+  my_theme() +
+  labs(x = "Activity", y = "Score", fill = "Smoothing Type") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+Step 3 is to look at how some of the ecological interpretations change when we use the different smoothing methods. Maybe by visualising the sequences or by looking at the longest durations etc. I haven't gotten around to this point yet though so will return later.
+
+Step 4 is to make a statement about which of the methods I think is better... Hopefully I can make this an automated statement somehow. A simple version of this would be to simply pick the one with the greater F1 score.
+
+```{r recommend}
+
+best <- metrics$smoothing_type[which.max(metrics$F1[metrics$Activity == "Macro-Average"])]
+improvement <- metrics$F1[metrics$Activity == "Macro-Average" & metrics$smoothing_type == best] - metrics$F1[metrics$Activity == "Macro-Average" & metrics$smoothing_type == "NoSmoothing"]
+
+paste0("The optimal post-processing method, as defined by the greatest F1 score, is the ", best, " method. Use of this post-processing smoothing method increases F1 by ", round(improvement,5), ".")
+
+```
+
