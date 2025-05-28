@@ -1,0 +1,36 @@
+---
+title: "ComparingSmoothingReport"
+output: html_document
+date: "`r Sys.Date()`"
+params:
+  base_path: "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
+  species: "Sparkes_Koala"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+This is the report to compare the various smoothing methods I tried. This is the first version of the report. It is very preliminary. I hope to build on this more in future.
+
+Step 1 is to find all the smoothing types that have been tried and load in their data to a consolidated file.
+```{r find what's been done, include = FALSE}
+metrics_list <- list.files(
+  file.path(base_path, "Output", species),
+  pattern = "*?.csv",
+  full.names = TRUE
+)
+
+metrics <- lapply(metrics_list, function(file) {
+  fread(file) %>%
+    mutate(smoothing_type = basename(file)) 
+})
+
+# remove Class: from the Activity and .csv from the smoothing_type
+metrics <- bind_rows(metrics) %>%
+  mutate(
+    Activity = gsub("Class: ", "", Activity),
+    smoothing_type = gsub("_performance.csv", "", smoothing_type)
+  )
+
+```

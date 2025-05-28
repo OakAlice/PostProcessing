@@ -20,8 +20,16 @@ source(file = file.path(base_path, "Scripts", "DataFormatStandardisation.R"))
 
 # No Smoothing ------------------------------------------------------------
 # assess performance and base stats of the raw predictions
-source(file = file.path(base_path, "Scripts", "NoSmoothingPerformance.R"))
+source(file = file.path(base_path, "Scripts", "NoSmoothing.R"))
 
 # Basic Temporal Smoothing ------------------------------------------------
 # doing the most basic mode-based smoothing
-source(file = file.path(base_path, "Scripts", "BasicSmoothingPerformance.R"))
+source(file = file.path(base_path, "Scripts", "BasicSmoothing.R"))
+
+
+
+
+
+# Comparing Smoothing Performances ----------------------------------------
+# this will pull out all the metrics tests and build a report for rapid comparison
+source(file = file.path(base_path, "Scripts", "CompareSmoothing.R"))

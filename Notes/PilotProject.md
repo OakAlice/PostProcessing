@@ -12,3 +12,5 @@
 **Tasks for tonight or tomorrow:**
 - [ ] Visualisation of sequence order
 - [ ] Begin Basic Temporal Smoothing code to compare to it
+	- This will be a mode function. I was thinking of doing a rolling mode of every 3 samples but I think I will make it a floating variable *x* so the user can specify how many samples to consider.
+- [ ] Account for the fact that we generally consider things on a minute - 5 minutes scale
