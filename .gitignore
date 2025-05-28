@@ -1,6 +1,7 @@
 # Ignore these directories at any level
-*/Data/
-*/Manuscript/
+/Data/
+/.obsidian/
+/Output/
 
 # Ignore R history files
 *.Rhistory
