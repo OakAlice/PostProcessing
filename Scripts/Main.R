@@ -26,6 +26,13 @@ source(file = file.path(base_path, "Scripts", "NoSmoothing.R"))
 # doing the most basic mode-based smoothing
 source(file = file.path(base_path, "Scripts", "BasicSmoothing.R"))
 
+# Duration Smoothing ------------------------------------------------------
+# removing too-short instances based on the 95th percentile durations
+source(file = file.path(base_path, "Scripts", "DurationSmoothing.R"))
+
+# Confusion Smoothing -----------------------------------------------------
+# correcting for flaws in the prediction system
+source(file = file.path(base_path, "Scripts", "ConfusionSmoothing.R"))
 
 
 
