@@ -3,6 +3,10 @@
 # the confusion matrix from the model creation step tells us information about which predictions are better than others
 # using this information we will improve on duration based smoothing
 
+
+# TODO: Is there an issue of leakage here because learning from test data???
+
+
 # Understand the Confusion Matrix -----------------------------------------
 # generate the confusion matric
 data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_raw_standardised.csv")))

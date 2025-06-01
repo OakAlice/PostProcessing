@@ -19,7 +19,7 @@ I'm currently in the field watching over Romeo the Western Grey. While I'm sitti
 	- Okay I did this, but that was 1 for most of them! 1 is just dominating the frequencies totally! When I exclude 1 and do the 95%, it looks way better. Except for some behaviours that have a far too long cut-off. ==I had to manually adjust a few numbers. This isn't really acceptable... will need to consider this a lot more.==
 - Just checked the results and eek. It smoothed over the top of all my infrequent behaviours resulting in a largely NA performance for the less frequent behaviours...
 - So far this seems to actually be dropping the performance slightly. I wonder whether this is an artefact of the (slight) possibility that the original predictions have some leakage in them and are therefore not *actually* totally independent...
-![[Pasted image 20250530201721.png]]
+- ![[Pasted image 20250530201721.png]]
 I've now started on the **Confusion Smoothing** method and have quickly reached another thinking point. I was able to extract the miscalssification likelihood from the confusion matrix so I know, given any predicted class, what the probability is of it actually being a different class. But ==how do I identify the "probably wrong" instances?== I could do it with:
 - mode approach - anything not the same as the mode of 5 gets investigated as possibly misclassified. 
 	- pros: likely to catch all the single errors, easy
@@ -38,6 +38,20 @@ What I should do is find a bunch of papers that have looked at post-processing i
 
 The next one for me to attempt is **Transition Matrix Smoothing** which I imagine will be like a manual version of the HMM. As in, I will manually calculate the probability of one behaviour type transitioning into another within the training data.
 - WAIT. I just had a thought. The training data hasn't necessarily been collected consecutively and this - and the other sequence-based methods - rely on it being as natural a representation of the true behavioural sequences as possible. I will have to check how much of the labelling is continuous... 
+- Okay have done that and found quite strange results. Did I do every 0.5 seconds for the predictions huh? I've made it so that there will be a "break" if there is more than 2 seconds between samples but will make this user defined.
+- So now I'm making a frequency plot which seems to indicate that most of the data has a sequence of only a few seconds long.
+- ![[Pasted image 20250601182724.png]]
+- I realised while doing this that I've been using the test data for everything but I actually have access to the training data which has way more info. I am switching my other methods to "learn" from the training data where such a step is included.
+	- Okay this looks way better
+	- this also removed the step of having to manually change the behaviour durations in the duration smoothing method because they were way better! Yes!!!
+- Next question is asking how many of these contain transitions vs being purely one behaviour?
+	- ![[Pasted image 20250601184656.png]]
+	- Okay, not looking too great. Over 90% just have one behaviour. That SUCKS. Okay, so what are the times between these? What if I increased my break duration to like 10 seconds? 
+		- I played around a bit until I got to a place I felt I could gather information from. This will be totally dataset dependent, with some datasets containing many long continuous sequences and transitions, and, at the other end, others having intentionally not collected transitions - for example.
+
+
+
+
 
 
 **Tasks for next time:**

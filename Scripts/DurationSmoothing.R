@@ -2,12 +2,12 @@
 # this is where we use information about duratios of behaviours in the training set
 # to devise logical smoothing brackets for the predictions
 
-# load in the raw data again
-data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_raw_standardised.csv")))
+# load in the training data
+train_data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_raw_train_standardised.csv")))
 
 # Identify sequences of continuous behaviour ------------------------------
 # number the consecutive sequences
-true_data <- data %>%
+train_data <- train_data %>%
   arrange(ID, Time) %>%
   group_by(ID) %>%
   mutate(
@@ -18,25 +18,21 @@ true_data <- data %>%
   ungroup()
 
 # Learn from the training data --------------------------------------------
-true_lengths <- true_data %>% 
+train_lengths <- train_data %>% 
   group_by(ID, sequence) %>%
   summarise(behaviour = true_class[1], length = length(sequence))
-true_summary <- true_lengths %>%
+train_summary <- train_lengths %>%
   group_by(behaviour) %>%
   # remove all the 1 second instances (they just dominate the frequency completely)
   filter(!length == 1) %>%
   summarise(mean = round(mean(length),1), max = max(length), min = min(length), p95 = quantile(length, 0.05))
 
-# based on my knowledge of the koala dataset, I'm going to adjust some of these numbers
-# need to really consider how I'm going to do this... have discussed more in obsidian notes.
-#### TODO: Fix this issue ####
-true_summary$p95[true_summary$behaviour == "Tree Sitting"] <- 10
-true_summary$p95[true_summary$behaviour == "Foraging/Eating"] <- 10
-true_summary$p95[true_summary$behaviour == "Bellowing"] <- 2
-
 # Use this to logic gate the smoothing ------------------------------------
+# now we switch to fixing the test data
+test_data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_raw_test_standardised.csv")))
+
 # begin by figuring out the sequence in the predictions
-predicted_data <- data %>%
+predicted_data <- test_data %>%
   arrange(ID, Time) %>%
   group_by(ID) %>%
   mutate(
@@ -51,7 +47,7 @@ predicted_data <- data %>%
 predicted_lengths <- predicted_data %>% 
   group_by(ID, sequence) %>%
   summarise(behaviour = predicted_class[1], length = length(sequence), .groups = "drop") %>%
-  left_join(true_summary, by = "behaviour") %>%
+  left_join(train_summary, by = "behaviour") %>%
   mutate(
     acceptable = case_when(
       is.na(p95) ~ "NO MATCHED BEHAVIOUR",
@@ -72,14 +68,12 @@ predictions_altered <- predicted_lengths %>%
   ungroup()
 
 # add this back into the original dataframe
-data <- left_join(predicted_data, predictions_altered, by = c('ID', 'sequence'))
+test_data <- left_join(predicted_data, predictions_altered, by = c('ID', 'sequence'))
 
-
-fwrite(data, file.path(base_path, "Output", species, "checking_data.csv"))
-
+# fwrite(test_data, file.path(base_path, "Output", species, "checking_data.csv"))
 
 # Recalculate performance and save ----------------------------------------
-performance <- compute_metrics(data$smoothed_class, data$true_class)
+performance <- compute_metrics(test_data$smoothed_class, test_data$true_class)
 metrics <- performance$metrics
 fwrite(metrics, file.path(base_path, "Output", species, "DurationSmoothing_performance.csv"))
 generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, "DurationSmoothing_performance.pdf"))

@@ -1,39 +1,70 @@
 # Transition Matrix Smoothing ---------------------------------------------
 # similar to the confusion method but based on transition probabilities.
 
-data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_raw_standardised.csv")))
+train_data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_raw_train_standardised.csv")))
+x <- 10 # this is the number of seconds between samples that's counted as a "break"
 
 # Assessing Continuousness ------------------------------------------------
 # before we use this method, we need to establish how "realistic" our data is
 # as in, has it been collected in natural sequence from which we can derive natural sequence probabilities?
 # to do this, look at how much of the data is continuous per individual
 
-# difference between times +/- 10%
-time_diff <- continuousness[1, "Time"] - continuousness[2, "Time"]
-time_max <- time_diff * 2
-time_min <- 0.5*time_diff
-
-continuousness <- data %>%
+train_data <- train_data %>%
   group_by(ID) %>%
   arrange(Time) %>%
+  mutate(DateTime = as.POSIXct((Time - 719529)*86400, origin = "1970-01-01", tz = "UTC"),
+    time_diff = difftime(DateTime, shift(DateTime, type = "lag")),
+    break_point = ifelse(time_diff > x, 1, 0),
+    break_point = replace_na(break_point, 0),
+    sequence = cumsum(break_point))
+
+summary <- train_data %>%
+  group_by(ID, sequence) %>%
+  summarise(sequence_length = length(sequence),
+            sequence_behaviours = as.factor(length(unique(true_class))))
+
+# make a distribution frequency plot to geez it (just curiosity)
+ggplot(summary, aes(x = sequence_length, fill = sequence_behaviours)) +
+  geom_bar(width = 5)
+
+# depending on your dataset there may or may not be a lot of transition sequences to lean from
+# you may have to adjust the x value and play around
+# just have to use ecological knowledge here
+
+# Create Transition Matrix ------------------------------------------------
+# based on this information, build a likelihood transition between behaviours
+# this will be very basic just: given a transition, how probable was that transition?
+
+# find the break points and record how they transitioned as a %
+transitions <- train_data %>%
+  group_by(sequence) %>%
   mutate(
-    diff_time = shift(Time, type = "lag") - Time)
-
-continuousness$break_point <- if(diff_time > time_max & diff_time < time_min){
-        0 
-      } else {
-        1
-      }
-continuousness <- continuousness %>% 
-  group_by(ID) %>%
-  arrange(Time) %>%
-  mutate(break_point = replace_na(break_point, 0),
-         sequence = cumsum(break_point))
-
+    previous_class = shift(true_class, type = "lag"),
+    change_point = ifelse(previous_class != true_class, 1, 0),
+    change_point = replace_na(change_point, 0)
+  ) %>%
+  filter(change_point == 1) %>%
+  select(sequence, previous_class, true_class) %>%
+  ungroup()
+# sometimes I do this to take a breather from piping for readability sake
+transitions <- transitions %>%
+  group_by(previous_class, true_class) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  group_by(previous_class) %>%
+  mutate(
+    proportion = count / sum(count)
+  ) %>%
+  rename(followed_by = true_class)
+  
 
 
 
 # Find all the break points -----------------------------------------------
+
+test_data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_raw_training_standardised.csv")))
+
+
+
 # mark whenever there is a change in behaviour
 data <- data %>%
   arrange(ID, Time) %>%
