@@ -34,7 +34,7 @@ metrics <- bind_rows(metrics) %>%
   )
 
 # add levels so its easier to plot later
-metrics$smoothing_type <- factor(metrics$smoothing_type, levels = c("NoSmoothing", "BasicSmoothing", "DurationSmoothing", "ConfusionSmoothing"))
+metrics$smoothing_type <- factor(metrics$smoothing_type, levels = c("NoSmoothing", "BasicSmoothing", "DurationSmoothing", "ConfusionSmoothing", "TransitionSmoothing"))
 
 ```
 

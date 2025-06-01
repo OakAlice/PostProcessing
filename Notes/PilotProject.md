@@ -3,7 +3,7 @@
 | Document  | Basic experimentation with koala data to design script function |
 | Child of  | [[MasterDoc]]                                                   |
 | Parent of | NA                                                              |
-## Data and Set Up
+## Data and Methods Development
 #### 28052025
 - For this trial I will be using the data from the Koala project that I worked on for Gabby. In the [[ProjectPitch]] I said I would use the test data that came out of the ML model building. Using the prediction outcomes is more interesting, but without ground-truthing, I can't easily say which of them is a performance improvement.
 - Okay, have done that now. Now I'm going to calculate performance (this will be a standardised method that all of them use)
@@ -32,7 +32,7 @@ Upon describing this problem to Chris, I realised that the issue is that I have 
 1. Identify instances that might be incorrectly labelled
 2. Determine whether they need to be flipped.
 What I should do is find a bunch of papers that have looked at post-processing in other domains and then copy them. For now, I am going to make this as simple as possible by looking at change points. Whenever there is a behaviour change, assess whether it could be a misclassification. 
-- Justification for this is that transition windows are very messy and probably get misclassified more often than an in-sequence established behaviour.
+- ==Justification for this is that transition windows are very messy and probably get misclassified more often than an in-sequence established behaviour.==
 - Well... I just tried that now and it sucked. As in, it made the performance so much worse than with no smoothing - nearly across board... will have to double check my logic for this system.
 	- Updated it by checking whether the change-point was a switch to a new continuous sequence (so if its the same as the one before or after it, leave it) and that improved performance a lot - though it's still worse than nothing in some cases... ==will need to return to this method to improve it when I've read some literature==
 
@@ -48,7 +48,15 @@ The next one for me to attempt is **Transition Matrix Smoothing** which I imagin
 	- ![[Pasted image 20250601184656.png]]
 	- Okay, not looking too great. Over 90% just have one behaviour. That SUCKS. Okay, so what are the times between these? What if I increased my break duration to like 10 seconds? 
 		- I played around a bit until I got to a place I felt I could gather information from. This will be totally dataset dependent, with some datasets containing many long continuous sequences and transitions, and, at the other end, others having intentionally not collected transitions - for example.
+- I have now gone ahead calculated the transition probability between any two combinations of behaviours seen in the training data (==I should probably also be accounting for combinations not seen in the training data==) and used this to assess the transitions seen in the predicted data. I have flagged all transitions with a probability below a user-defined threshold as "suspicious". But now what? Given that an event is suspicious... I shouldn't just automatically flip it to a more probable event.
+	- In the durations smoothing, which has a similar idea, when I encountered a suspicious event, I changed it to be the most recently acceptable behaviour... do I do that here too?
+	- Damn it. For every time this made it better, it also made it worse. Ugh. The macro-average is better than Duration Smoothing at least, but not better than doing nothing.
+	- ![[Pasted image 20250601201638.png]]
 
+- ==Please note that, as a quirk of the data Gabby has labelled, it is considered highly improbable that sleeping would transition to wakeful sleeping (she didn't record these events). All kinks like this could *easily* be worked out by an ecologist even though they will unfairly hamstring my analysis.== %% Note this in the paper %%
+
+Now that I've got a basic system working for these manual methods I can move on to the ML methods - the first of which is an **HMM**. I should probably read some papers at this point but the motto "move fast and break things" is way more my style lmao.
+- 
 
 
 
@@ -59,9 +67,7 @@ The next one for me to attempt is **Transition Matrix Smoothing** which I imagin
 - [ ] Basic ecological question to compare results of
 - [ ] Find a bunch of timeseries post-processing papers from other domains 
 - [ ] Second way to assess performance other than F1 score (as in, something that looks at the ecological meaningfulness of the data)
-
-
-
+- [ ] Create the best possible smoothing method that I can think of.
 
 
 
@@ -75,14 +81,14 @@ Hey Dave (and cc'ed Chris)!
 
 Hope you've been well!
 
-Just got back from our kangaroo collar deployment and my ASSAB conference! Had a great time but glad to be back in the office now :) I'm home for 2.5 weeks until off to Europe so thought it would be a good idea to fit in a meeting if possible?
+Just got back from our kangaroo collar deployment and my ASSAB conference! Had a great time :) I'm home for 2.5 weeks until off to Europe though so thought it would be a good idea to fit in a meeting if possible?
 
-I've made some decently sized decisions regarding my thesis and would be good to get your thoughts, Dave. Biggest update is that I went ahead on my Post-Processing/Sequencing project and - to my massive surprise - it went really really well! I worked on this while I was out in the field and have pulled together a draft report to explain the preliminary results from the first dataset. Would be great to get some feedback on this before I progress into cross-validation and additional datasets. I've attached the prelim draft below:
+I've made some decently-sized decisions regarding my thesis and would be good to get your thoughts, Dave. Biggest update is that I went ahead on my Post-Processing/Sequencing project and - to my massive surprise - it went really really well! I worked on this while I was out in the field and have pulled together a draft report to explain the preliminary results from the first dataset. Would be great to get some feedback on this before I progress into cross-validation and additional datasets. I've attached the prelim draft below:
 
 Draft: XXXXXX
 Git: XXXXXX
 
-I'm super excited about this, but (as with the last chapter) there's probably some glaring flaws I'm looking straight past and will be great to have a chat about it!
+I'm super excited about this, but - as I've now learnt - the trend between my optimism levels and my results being legitimate isn't linear, and this will definitely need critical review.
 
 Thanks,
 Oak

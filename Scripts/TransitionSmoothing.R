@@ -37,7 +37,7 @@ ggplot(summary, aes(x = sequence_length, fill = sequence_behaviours)) +
 
 # find the break points and record how they transitioned as a %
 transitions <- train_data %>%
-  group_by(sequence) %>%
+  group_by(ID, sequence) %>%
   mutate(
     previous_class = shift(true_class, type = "lag"),
     change_point = ifelse(previous_class != true_class, 1, 0),
@@ -55,43 +55,56 @@ transitions <- transitions %>%
     proportion = count / sum(count)
   ) %>%
   rename(followed_by = true_class)
-  
 
+# I can then use these percentages to assess the validity of the transitions we see in the predictions
 
+# Find all transitions in the predictions data ----------------------------
+test_data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_raw_test_standardised.csv")))
 
-# Find all the break points -----------------------------------------------
-
-test_data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_raw_training_standardised.csv")))
-
-
-
-# mark whenever there is a change in behaviour
-data <- data %>%
-  arrange(ID, Time) %>%
+test_data <- test_data %>%
   group_by(ID) %>%
+  arrange(Time) %>%
+  mutate(DateTime = as.POSIXct((Time - 719529)*86400, origin = "1970-01-01", tz = "UTC"),
+         time_diff = difftime(DateTime, shift(DateTime, type = "lag")),
+         break_point = ifelse(time_diff > x, 1, 0),
+         break_point = replace_na(break_point, 0),
+         sequence = cumsum(break_point)) %>%
+  group_by(ID, sequence) %>%
   mutate(
-    change_point = ifelse(shift(predicted_class, type = "lag") == predicted_class, 0, 1),
+    previous_class = shift(predicted_class, type = "lag"),
+    change_point = ifelse(previous_class != predicted_class, 1, 0),
     change_point = replace_na(change_point, 0)
+  )
+
+# Check each of the transitions probability -------------------------------
+threshold <- 0.3  # user-defined probability threshold
+test_data <- test_data %>%
+  left_join(transitions, 
+            by = c("previous_class" = "previous_class", 
+                   "predicted_class" = "followed_by")) %>%
+  mutate(
+    likelihood = case_when(
+      change_point == 1 & (is.na(proportion) | proportion < threshold) ~ "SUSPICIOUS",
+      TRUE ~ "ACCEPTABLE"
+    )
   ) %>%
+  ungroup() %>%
+  select(!c("break_point", "previous_class", "change_point", "count")) # clean it up
+
+# Change the suspicious events --------------------------------------------
+# TODO: Change the logic of how I modify suspicious events
+# for now I'm going with the simple method of denying the transition
+# this is dumb and overly simple but will do for now
+
+test_data <- test_data %>%
+  mutate(smoothed_class = ifelse(likelihood == "ACCEPTABLE", predicted_class, NA)
+  ) %>%
+  group_by(ID, sequence) %>% 
+  fill(smoothed_class, .direction = "down") %>%
   ungroup()
 
-# Assess the validity of those changes ------------------------------------
-# for every change, assess transition probability
-data$smoothed_class <- NA
-for (i in 1:length(data$change_point)){
-  data$smoothed_class[i] <- data$predicted_class[i] # default set it to be itself
-  
-  change <- data$change_point[i]
-  if (change == 1){
-    
-    #add code here later
-  }
-}
-
 # Recalculate performance and save ----------------------------------------
-performance <- compute_metrics(data$smoothed_class, data$true_class)
+performance <- compute_metrics(test_data$smoothed_class, test_data$true_class)
 metrics <- performance$metrics
-fwrite(metrics, file.path(base_path, "Output", species, "ConfusionSmoothing_performance.csv"))
-generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, "ConfusionSmoothing_performance.pdf"))
-
-
+fwrite(metrics, file.path(base_path, "Output", species, "TransitionSmoothing_performance.csv"))
+generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, "TransitionSmoothing_performance.pdf"))
