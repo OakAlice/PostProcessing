@@ -3,6 +3,7 @@
 # last year Ryley did some amazing work figuring out how to make automated, interactive markdown reports
 # I want to replicate this so I can generate results rapidly
 
+source(file.path(base_path, "Scripts", "PlottingFunctions.R"))
 if (1 == 1) { # change this to be some more helpful condition later lol
   tryCatch({
     # Define the output directory and file

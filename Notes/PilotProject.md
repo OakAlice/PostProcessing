@@ -27,12 +27,23 @@ I've now started on the **Confusion Smoothing** method and have quickly reached 
 - break approach - whenever the behaviour changes, check if that change was a misclassification
 	- pros: likely to catch all the single errors, also easy
 	- cons: need to think about this more.... going to call it a night...
+#### 01062025
+Upon describing this problem to Chris, I realised that the issue is that I have 2 simultaneous tasks.
+1. Identify instances that might be incorrectly labelled
+2. Determine whether they need to be flipped.
+What I should do is find a bunch of papers that have looked at post-processing in other domains and then copy them. For now, I am going to make this as simple as possible by looking at change points. Whenever there is a behaviour change, assess whether it could be a misclassification. 
+- Justification for this is that transition windows are very messy and probably get misclassified more often than an in-sequence established behaviour.
+- Well... I just tried that now and it sucked. As in, it made the performance so much worse than with no smoothing - nearly across board... will have to double check my logic for this system.
+	- Updated it by checking whether the change-point was a switch to a new continuous sequence (so if its the same as the one before or after it, leave it) and that improved performance a lot - though it's still worse than nothing in some cases... ==will need to return to this method to improve it when I've read some literature==
 
+The next one for me to attempt is **Transition Matrix Smoothing** which I imagine will be like a manual version of the HMM. As in, I will manually calculate the probability of one behaviour type transitioning into another within the training data.
+- WAIT. I just had a thought. The training data hasn't necessarily been collected consecutively and this - and the other sequence-based methods - rely on it being as natural a representation of the true behavioural sequences as possible. I will have to check how much of the labelling is continuous... 
 
 
 **Tasks for next time:**
 - [ ] Visualisation of sequence order
 - [ ] Basic ecological question to compare results of
+- [ ] Find a bunch of timeseries post-processing papers from other domains 
 - [ ] Second way to assess performance other than F1 score (as in, something that looks at the ecological meaningfulness of the data)
 
 
