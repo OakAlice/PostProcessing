@@ -8,7 +8,8 @@ library(pacman)
 p_load(tidyverse, 
        data.table,
        caret,
-       ggplot2)
+       ggplot2,
+       depmixS4)
 
 
 # Define variables for this run -------------------------------------------
@@ -24,7 +25,7 @@ source(file = file.path(base_path, "Scripts", "NoSmoothing.R"))
 
 # Basic Temporal Smoothing ------------------------------------------------
 # doing the most basic mode-based smoothing
-source(file = file.path(base_path, "Scripts", "BasicSmoothing.R"))
+source(file = file.path(base_path, "Scripts", "ModeSmoothing.R"))
 
 # Duration Smoothing ------------------------------------------------------
 # removing too-short instances based on the 95th percentile durations
@@ -33,6 +34,17 @@ source(file = file.path(base_path, "Scripts", "DurationSmoothing.R"))
 # Confusion Smoothing -----------------------------------------------------
 # correcting for flaws in the prediction system
 source(file = file.path(base_path, "Scripts", "ConfusionSmoothing.R"))
+
+# Transition Smoothing ----------------------------------------------------
+# removing improbable behavioural transitions
+source(file = file.path(base_path, "Scripts", "TransitionSmoothing.R"))
+
+# HMM Smoothing -----------------------------------------------------------
+# using secondary Hidden Markov Model to smooth 
+source(file = file.path(base_path, "Scripts", "HMMSmoothing.R"))
+
+
+
 
 
 

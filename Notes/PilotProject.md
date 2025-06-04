@@ -55,8 +55,16 @@ The next one for me to attempt is **Transition Matrix Smoothing** which I imagin
 
 - ==Please note that, as a quirk of the data Gabby has labelled, it is considered highly improbable that sleeping would transition to wakeful sleeping (she didn't record these events). All kinks like this could *easily* be worked out by an ecologist even though they will unfairly hamstring my analysis.== %% Note this in the paper %%
 
-Now that I've got a basic system working for these manual methods I can move on to the ML methods - the first of which is an **HMM**. I should probably read some papers at this point but the motto "move fast and break things" is way more my style lmao.
-- 
+Now that I've got a basic system working for these manual methods I can move on to the ML methods - the first of which is an **HMM**. I then read some websites and papers to understand what I'm doing but then realised I was too tired to take it in and stopped for the night instead.
+#### 03062025
+The decision I hadn't even been thinking about would be whether or not to include the feature information in this secondary smoothing. If I could look at the features again, maybe my predictions would be way better? I don't really want to do that though because its delving into prediction more than post?
+- So, therefore, making the decision to only give the models access to the time, ID, and predictions, what can I do?
+While this hasn't been done in the ecology field yet, I can draw on examples from other time-series sequence fields such as speech recognition. I have started searching for other papers where this has been done. But then the internet at Fowler's ran out and I couldn't access anything anymore.
+#### 04062025
+Okay the HMM sucked ASS. It didn't do what I expected and actually amplified errors?? According to Chat-GPT this is an expected result and to improve it I need to feed the HMM model-predicted class probabilities (instead of the labels). Damn it. I didn't calculate those I don't think... but it would generally improve all the methods if I were to do this. So possibly I should recalculate the test results now.
+
+
+
 
 
 
@@ -71,24 +79,29 @@ Now that I've got a basic system working for these manual methods I can move on 
 
 
 
+#### Thoughts and Conclusions
+- Conclusion for the paper will probably be that the best post-processing method depends on the scale of your behaviours, and the question you're trying to ask. There is no one size fits all in ecology. We need to be thinking about our data in context of the question it is asking. And its actually a very manual process.
+- For example, in a highly variable model with lots of short behaviours, maybe you dont want to smooth in post after all? But for a model with generalised behaviours, it can probably help a lot.
+- We need to be looking at the scale of the questions we're asking. Is it more important to be accurate or interpretable?
 
 
 
 
 
+Best possible method would be to have an ecologist define all the parameters and then combine all the different types of smoothing and then for anything thats flagged as suspicious, it visualises the data for you, and you can recode it.
 
-Hey Dave (and cc'ed Chris)!
 
-Hope you've been well!
 
-Just got back from our kangaroo collar deployment and my ASSAB conference! Had a great time :) I'm home for 2.5 weeks until off to Europe though so thought it would be a good idea to fit in a meeting if possible?
 
-I've made some decently-sized decisions regarding my thesis and would be good to get your thoughts, Dave. Biggest update is that I went ahead on my Post-Processing/Sequencing project and - to my massive surprise - it went really really well! I worked on this while I was out in the field and have pulled together a draft report to explain the preliminary results from the first dataset. Would be great to get some feedback on this before I progress into cross-validation and additional datasets. I've attached the prelim draft below:
+Hey Dave and Chris!
 
-Draft: XXXXXX
-Git: XXXXXX
+Just got back from our kangaroo collar deployment and my ASSAB conference! Dave is at a conference this week, but if it still works for everyone - we could pencil a meeting for sometime early next week? :) 
 
-I'm super excited about this, but - as I've now learnt - the trend between my optimism levels and my results being legitimate isn't linear, and this will definitely need critical review.
+Before we meet, I've pulled together a draft report to explain my prelim results from the first dataset for my fourth chapter. I'm super excited about this, but - as I've now learnt - the trend between my optimism levels and my results being legitimate is far from positively linear ahah, and this will definitely need some critical review!
 
-Thanks,
+Draft: [[PilotReport]]
+
+Thank you and hope you have a great time at the conference Dave.
+
+Regards,
 Oak
