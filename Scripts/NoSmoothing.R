@@ -1,7 +1,7 @@
 # Testing performance of base predictions ---------------------------------
 
 # loading in the standardised formats
-data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_raw_standardised.csv")))
+data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_test_data.csv")))
 
 # no smoothing is performed, therefore just duplicate and rename the column without doing anything
 data <- data %>% mutate(smoothed_class = predicted_class)

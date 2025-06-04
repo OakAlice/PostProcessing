@@ -62,7 +62,21 @@ The decision I hadn't even been thinking about would be whether or not to includ
 While this hasn't been done in the ecology field yet, I can draw on examples from other time-series sequence fields such as speech recognition. I have started searching for other papers where this has been done. But then the internet at Fowler's ran out and I couldn't access anything anymore.
 #### 04062025
 Okay the HMM sucked ASS. It didn't do what I expected and actually amplified errors?? According to Chat-GPT this is an expected result and to improve it I need to feed the HMM model-predicted class probabilities (instead of the labels). Damn it. I didn't calculate those I don't think... but it would generally improve all the methods if I were to do this. So possibly I should recalculate the test results now.
+- I will try that now.
+- Holy fuck I'm pulling out my hair what is going on. I can't find any tutorials that will show me what I want to do and I'm starting to doubt the validity of my task. Resorted to using claude and chat-gpt but those dumb fucks just gave me nonsensical code with non-existent variables.
+- https://www.numberanalytics.com/blog/deep-understanding-hidden-markov-models-sequence-analysis
+	- ![[Pasted image 20250604201841.png|400]]
+- https://cran.r-project.org/web/packages/seqHMM/vignettes/seqHMM.pdf
+	- In the context of hidden Markov models, sequence data consists of observed states, which are regarded as probabilistic functions of hidden states. Hidden states cannot be observed directly, but only through the sequence(s) of observations, since they emit the observations on varying probabilities.
+	- ohhhhh okay. So I'm starting to think that I can't set my true class as the observed and the hidden state. I need to have the predicted class be the observed state with the true class as the hidden state... I dont have predicted classes for my training data though... but I could make them????
+	- Okay yeah! I was using an unsupervised package but when I switched to a package that allowed supervised leanring and added in some predictions into my training data, I got the kind of code I was looking for.
+		- I am however worried that this is a highly illegitimate thing to do... considering that I predicted onto my own training data, this is going to have a much higher prediction accuracy than the test data, and that will be higher than the deployment data again... so? Am I actually learning anything?
+		- Huh. Bellowing is massively over-predicted in the outputs. Is that something I can change?
+			- Looks like yeah, this is something that I can manually adjust - but I dont want to be doing that at this stage.
 
+
+
+==Note, for the ecological question I should be using the deployment data not the test data==
 
 
 

@@ -29,7 +29,7 @@ train_summary <- train_lengths %>%
 
 # Use this to logic gate the smoothing ------------------------------------
 # now we switch to fixing the test data
-test_data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_raw_test_standardised.csv")))
+test_data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_test_data.csv")))
 
 # begin by figuring out the sequence in the predictions
 predicted_data <- test_data %>%

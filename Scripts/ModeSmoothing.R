@@ -2,7 +2,7 @@
 # a very simple rolling mode 
 
 # load in the raw data again
-data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_raw_standardised.csv")))
+data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_test_data.csv")))
 
 # in order to create a 'smoothed' class, I am going to do a rolling mode that removes lone instances
 data$smoothed_class <- rolling_mode_smooth(data$predicted_class, x = 5)

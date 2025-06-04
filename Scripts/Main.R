@@ -9,7 +9,7 @@ p_load(tidyverse,
        data.table,
        caret,
        ggplot2,
-       depmixS4)
+       HMM)
 
 
 # Define variables for this run -------------------------------------------
@@ -17,7 +17,7 @@ species <- "Sparkes_Koala"
 
 # Standardise format ------------------------------------------------------
 # data must be saved in Data/Species folders with c(Time, ID, true_classes, generalised_classes, predicted_classes) columns
-source(file = file.path(base_path, "Scripts", "DataFormatStandardisation.R"))
+# source(file = file.path(base_path, "Scripts", "DataFormatStandardisation.R"))
 
 # No Smoothing ------------------------------------------------------------
 # assess performance and base stats of the raw predictions

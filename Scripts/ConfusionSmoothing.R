@@ -9,7 +9,7 @@
 
 # Understand the Confusion Matrix -----------------------------------------
 # generate the confusion matric
-data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_raw_standardised.csv")))
+data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_test_data.csv")))
 performance <- compute_metrics(data$predicted_class, data$true_class)
 confusion <- as.matrix(performance$conf_matrix_padded)
 

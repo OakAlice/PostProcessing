@@ -56,10 +56,42 @@ transitions <- transitions %>%
   ) %>%
   rename(followed_by = true_class)
 
+
+
+
+############## replace the above code with the following: ######
+train_data <- train_data %>% group_by(true_class) %>% slice_head(n = 200) %>% ungroup()
+
+states <- levels(train_data$true_class)
+n_states <- length(states)
+
+transition_counts <- matrix(0, n_states, n_states, dimnames = list(states, states))
+train_data <- train_data %>%
+  arrange(ID, Time) %>%
+  group_by(ID) %>%
+  mutate(next_state = lead(true_class)) %>%
+  ungroup()
+
+transitions <- na.omit(train_data[, c("true_class", "next_state")])
+
+for (i in seq_len(nrow(transitions))) {
+  from <- as.character(transitions$true_class[i])
+  to <- as.character(transitions$next_state[i])
+  transition_counts[from, to] <- transition_counts[from, to] + 1
+}
+
+# Convert to probabilities
+transition_probs <- prop.table(transition_counts, 1)
+#################### it is better ############################
+
+
+
+
+
 # I can then use these percentages to assess the validity of the transitions we see in the predictions
 
 # Find all transitions in the predictions data ----------------------------
-test_data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_raw_test_standardised.csv")))
+test_data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_test_data.csv")))
 
 test_data <- test_data %>%
   group_by(ID) %>%

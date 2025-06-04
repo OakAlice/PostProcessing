@@ -18,5 +18,6 @@ my_theme <- function() {
 # Colours -----------------------------------------------------------------
 fave_colours = c("coral", "aquamarine3", "orchid3", "slateblue2", "goldenrod2", "deepskyblue3", "firebrick3", "tan1", "lightcoral" , "darkcyan", "tomato", "plum")
 my_colours = c("coral", "aquamarine3", "orchid3", "slateblue2", "goldenrod2", "deepskyblue3", "firebrick3", "tan1", "lightcoral" , "darkcyan", "tomato")
-names(my_colours) <- c("NoSmoothing", "BasicSmoothing", "DurationSmoothing", "ConfusionSmoothing", "TransitionSmoothing")
+names(my_colours) <- c("NoSmoothing", "ModeSmoothing", "DurationSmoothing", 
+                       "ConfusionSmoothing", "TransitionSmoothing", "HMMSmoothing")
 
