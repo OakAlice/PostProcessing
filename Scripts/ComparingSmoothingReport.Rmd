@@ -34,7 +34,7 @@ metrics <- bind_rows(metrics) %>%
   )
 
 # add levels so its easier to plot later
-metrics$smoothing_type <- factor(metrics$smoothing_type, levels = c("NoSmoothing", "ModeSmoothing", "DurationSmoothing", "ConfusionSmoothing", "TransitionSmoothing", "HMMSmoothing"))
+metrics$smoothing_type <- factor(metrics$smoothing_type, levels = c("NoSmoothing", "ModeSmoothing", "DurationSmoothing", "ConfusionSmoothing", "TransitionSmoothing", "HMMSmoothing", "BayesianSmoothing"))
 
 ```
 
@@ -64,7 +64,12 @@ Step 4 is to make a statement about which of the methods I think is better... Ho
 
 ```{r recommend}
 
-best <- metrics$smoothing_type[which.max(metrics$F1[metrics$Activity == "Macro-Average"])]
+best <- metrics %>%
+  filter(Activity == "Macro-Average") %>%
+  arrange(F1) %>%
+  tail(1)
+best <- best$smoothing_type
+  
 improvement <- metrics$F1[metrics$Activity == "Macro-Average" & metrics$smoothing_type == best] - metrics$F1[metrics$Activity == "Macro-Average" & metrics$smoothing_type == "NoSmoothing"]
 
 paste0("The optimal post-processing method, as defined by the greatest F1 score, is the ", best, " method. Use of this post-processing smoothing method increases F1 by ", round(improvement,5), ".")

@@ -9,7 +9,8 @@ p_load(tidyverse,
        data.table,
        caret,
        ggplot2,
-       HMM)
+       HMM,
+       INLA)
 
 
 # Define variables for this run -------------------------------------------

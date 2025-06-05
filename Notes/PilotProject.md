@@ -73,6 +73,11 @@ Okay the HMM sucked ASS. It didn't do what I expected and actually amplified err
 		- I am however worried that this is a highly illegitimate thing to do... considering that I predicted onto my own training data, this is going to have a much higher prediction accuracy than the test data, and that will be higher than the deployment data again... so? Am I actually learning anything?
 		- Huh. Bellowing is massively over-predicted in the outputs. Is that something I can change?
 			- Looks like yeah, this is something that I can manually adjust - but I dont want to be doing that at this stage.
+	- Managed to fix it last thing before I went to bed and its working now... albeit not well.
+#### 05062025
+Now I am going to get started on the Bayesian smoothing. What does this even mean?
+https://www.seascapemodels.org/rstats/2017/06/18/estimating-popn-decline.html
+- 
 
 
 
