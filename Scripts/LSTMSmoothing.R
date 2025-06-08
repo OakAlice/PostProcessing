@@ -150,16 +150,6 @@ hidden_size <- best_parameters$hidden_size
 window_size <- best_parameters$window_size
 epochs <- 10
 
-# manually setting them for testing
-hidden_size <- 64
-window_size <- 5
-epochs <- 10
-
-# Debugging / looking at output -------------------------------------------
-# just needed this step to fix issues in the model
-best_preds <- smoothed_predictions[[best_index]]
-
-
 # The final build and results ---------------------------------------------
 train_data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_train_data.csv"))) %>%
   na.omit() %>%
@@ -176,11 +166,6 @@ metrics <- output$metrics
 fwrite(metrics, file.path(base_path, "Output", species, "LSTMSmoothing_performance.csv"))
 generate_confusion_plot(performance$conf_matrix_padded,
                         save_path = file.path(base_path, "Output", species, "LSTMSmoothing_performance.pdf"))
-# currently cant do the ecological analysis because smoothed_class is inside the function
-# TODO: fix this
-
-
-
 
 
 # Notes -------------------------------------------------------------------

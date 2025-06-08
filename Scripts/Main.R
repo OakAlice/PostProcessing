@@ -21,6 +21,12 @@ target_activity <- "Walking" # behaviour that the ecological analyses will be ab
 # data must be saved in Data/Species folders with c(Time, ID, true_classes, generalised_classes, predicted_classes) columns
 # source(file = file.path(base_path, "Scripts", "DataFormatStandardisation.R"))
 
+
+# Important functions -----------------------------------------------------
+source(file = file.path(base_path, "Scripts", "PerformanceTestingFunctions.R"))
+source(file = file.path(base_path, "Scripts", "EcologicalTestingFunctions.R"))
+source(file = file.path(base_path, "Scripts", "PlottingFunctions.R"))
+
 # No Smoothing ------------------------------------------------------------
 # assess performance and base stats of the raw predictions
 source(file = file.path(base_path, "Scripts", "NoSmoothing.R"))

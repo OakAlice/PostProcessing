@@ -90,7 +90,8 @@ I could not get keras or tensorflow (preferred NN methods for R) up and working 
 		- Need to walk away for a minute.
 #### 09062025
 The error I was discussing directly above ended up being how I was switching them from a 1 encoded factor (R counts from 1) to a 0 encoded factor (the way the nn module required) and then converting them back to classes but was accidentally adding that +1 back in twice. When I resolved that, results got so much better --- immediately back up to F1 > 80.
-- My loss is still very high though... I should be aiming for ~1 and instead I'm getting down to ~46 at a minimum.
+- My loss is still very high though... I should be aiming for ~1 and instead I'm getting down to ~46 at 20 epochs. I didn't want to risk over-fitting by pushing past that many epochs but maybe I should? Need to do some googling about industry standards.
+- Damn it. Although it got nearly 98 on the validation data, dropped to 77 on the test data so is still worse than doing nothing... whyyyyy. Need to calculate the ecological interpretations so I can get some clarity on this.
 
 
 

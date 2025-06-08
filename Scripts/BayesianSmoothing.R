@@ -5,9 +5,6 @@
 train_data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_train_data.csv"))) %>%
   na.omit()
 
-# small bit of data for play
-train_data <- train_data %>% group_by(true_class) %>% slice_head(n = 200) %>% ungroup()
-
 states <- levels(as.factor(train_data$true_class))
 n_states <- length(states)
 

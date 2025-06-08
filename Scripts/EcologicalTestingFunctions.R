@@ -3,7 +3,7 @@
 # ecological question of choice
 
 # I'm not sure what to do with this yet... but will just leave here for now
-
+# can build on this more in future
 
 ecological_analyses <- function(smoothing_type, test_data, target_activity){
   
