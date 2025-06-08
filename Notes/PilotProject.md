@@ -75,13 +75,29 @@ Okay the HMM sucked ASS. It didn't do what I expected and actually amplified err
 			- Looks like yeah, this is something that I can manually adjust - but I dont want to be doing that at this stage.
 	- Managed to fix it last thing before I went to bed and its working now... albeit not well.
 #### 05062025
-Now I am going to get started on the Bayesian smoothing. What does this even mean?
-https://www.seascapemodels.org/rstats/2017/06/18/estimating-popn-decline.html
-- 
+Now I am going to get started on the **Bayesian smoothing**.
+- That was pretty easy, but it was kind of bad... surely there has to be a better way?
+- ooooh I was still training on toy data! When I increased to the full data, performance shot up! Very niiiice. Still doesn't out-do the mode smoothing, but it's very close. I'm impressed and excited to tune this more.
+The last method I was considering using was the **Long Short Term Memory** method.
+#### 06062025
+I could not get keras or tensorflow (preferred NN methods for R) up and working so I had to switch to torch, for which there are fewer resources. I have it "working" but it does the worst of all the methods. In fact, it seems that the more powerful the method, the worse it is performing for me in terms of performance metrics.
+- Oops, turns out I was accidentally training it on the predicted class, not the true class.
+- Fixed that and it still didn't do better wtf.
+- Okay so it looks like there was an off-set in the smoothing. When I adjusted this up, the performance improved because the smooths were back in alignment with the predicted. The performance is now back in alignment with the rough performance of the other smoothers. I expect that tuning hyperparameters will cause this to be better... so am going to set that up now.
+	- That took a while because I tried to cheat by using chat-GPT and it cooked me. When I repeated it manually, I got it working for a few simple parameters. ==I will later come back to this and refactorise it into nice functions.==
+	- Just finished the first tune and found that it made it so much worse because there wasn't much information from each of the classes...
+		- Nope. That wasn't the problem. Its just really really really bad... how could it be so bad?? When I was running it manually it had an F1 of 0.72 and now its like 0.05
+		- Need to walk away for a minute.
+
+
+It wasn't in my original pitch, but I'm going to consider a few more smoothing methods as well. Namely, the Kalmann filter and maybe the Holt-Winters method which incorporates longer-term trends (I could do time of day and seasonality as well). Need to do "ecologist informed" method where I use all my ecological knowledge to make the best smoother.
 
 
 
-==Note, for the ecological question I should be using the deployment data not the test data==
+
+
+
+==Note, for the ecological question I should be using the deployment data not the test data?==
 
 
 
@@ -91,11 +107,11 @@ https://www.seascapemodels.org/rstats/2017/06/18/estimating-popn-decline.html
 
 **Tasks for next time:**
 - [ ] Visualisation of sequence order
-- [ ] Basic ecological question to compare results of
+- [x] Basic ecological question to compare results of
 - [ ] Find a bunch of timeseries post-processing papers from other domains 
-- [ ] Second way to assess performance other than F1 score (as in, something that looks at the ecological meaningfulness of the data)
 - [ ] Create the best possible smoothing method that I can think of.
-
+- [ ] Write up draft report for Chris and Dave to read
+- [ ] get the ecological analysis possible for LSTM methods
 
 
 #### Thoughts and Conclusions
