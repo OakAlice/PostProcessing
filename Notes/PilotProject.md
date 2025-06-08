@@ -86,8 +86,14 @@ I could not get keras or tensorflow (preferred NN methods for R) up and working 
 - Okay so it looks like there was an off-set in the smoothing. When I adjusted this up, the performance improved because the smooths were back in alignment with the predicted. The performance is now back in alignment with the rough performance of the other smoothers. I expect that tuning hyperparameters will cause this to be better... so am going to set that up now.
 	- That took a while because I tried to cheat by using chat-GPT and it cooked me. When I repeated it manually, I got it working for a few simple parameters. ==I will later come back to this and refactorise it into nice functions.==
 	- Just finished the first tune and found that it made it so much worse because there wasn't much information from each of the classes...
-		- Nope. That wasn't the problem. Its just really really really bad... how could it be so bad?? When I was running it manually it had an F1 of 0.72 and now its like 0.05
+		- Nope. That wasn't the problem. Its just really really really bad... how could it be so bad?? When I was running it manually it had an F1 of 0.72 and now its like 0.05???
 		- Need to walk away for a minute.
+#### 09062025
+The error I was discussing directly above ended up being how I was switching them from a 1 encoded factor (R counts from 1) to a 0 encoded factor (the way the nn module required) and then converting them back to classes but was accidentally adding that +1 back in twice. When I resolved that, results got so much better --- immediately back up to F1 > 80.
+- My loss is still very high though... I should be aiming for ~1 and instead I'm getting down to ~46 at a minimum.
+
+
+
 
 
 It wasn't in my original pitch, but I'm going to consider a few more smoothing methods as well. Namely, the Kalmann filter and maybe the Holt-Winters method which incorporates longer-term trends (I could do time of day and seasonality as well). Need to do "ecologist informed" method where I use all my ecological knowledge to make the best smoother.

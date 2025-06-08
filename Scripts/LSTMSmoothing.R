@@ -3,8 +3,6 @@
 # begin by hyperparameter tuning and then later retrain the final version
 # code is currently very slow and needs to be vectorised / refactorised
 
-source(file.path(base_path, "Scripts", "PerformanceTestingFunctions.R"))
-
 # Split data into training and val ----------------------------------------
 other_data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_train_data.csv"))) %>%
   na.omit() %>%
@@ -27,8 +25,9 @@ make_lstm_input <- function(data, window_size, class_levels) {
     return(NULL)
   }
   
+  # have to do -1 so that it is indexed from 0 (necessary for package)
   encoded <- as.integer(factor(data$predicted_class, levels = class_levels)) - 1
-  y_pred <- diag(n_classes)[encoded + 1, ]
+  y_pred <- diag(n_classes)[encoded + 1, ] # +1 again so its back where it should be
   
   n_obs <- nrow(y_pred)
   X_array <- array(NA, dim = c(n_obs - window_size, window_size, n_classes))
@@ -44,7 +43,6 @@ make_lstm_input <- function(data, window_size, class_levels) {
     y = torch_tensor(y_target, dtype = torch_long())
   )
 }
-
 
 # Training and testing function -------------------------------------------
 train_and_test_lstm <- function(train_data, val_data, epochs, window_size, hidden_size){
@@ -96,6 +94,7 @@ train_and_test_lstm <- function(train_data, val_data, epochs, window_size, hidde
     }
     cat(sprintf("Epoch %d: Loss %.4f\n", epoch, total_loss))
   }
+  
   # calculate
   X_test <- val_input$X
   net$eval()
@@ -107,7 +106,7 @@ train_and_test_lstm <- function(train_data, val_data, epochs, window_size, hidde
   # Add smoothed predictions to test data
   val_data$smoothed_class <- NA_character_ 
   midpoints <- floor(window_size / 2):(floor(window_size / 2) + length(smoothed_idx) - 1)
-  val_data$smoothed_class[midpoints] <- class_levels[as.numeric(smoothed_idx) + 1]
+  val_data$smoothed_class[midpoints] <- class_levels[as.numeric(smoothed_idx)] #+ 1]
   
   # Recalculate performance and save
   performance <- compute_metrics(val_data$smoothed_class, val_data$true_class)
@@ -121,14 +120,17 @@ train_and_test_lstm <- function(train_data, val_data, epochs, window_size, hidde
 results <- list()
 smoothed_predictions <- list()
 
-parameters <- expand.grid(window_size = c(5, 10),
-                   hidden_size = c(32),
-                   epochs = c(5))
+parameters <- expand.grid(window_size = c(3, 5),
+                   hidden_size = c(64, 128),
+                   epochs = c(10, 20))
 
 for (i in 1:nrow(parameters)){
   row <- parameters[i, ]
   
-  output <- train_and_test_lstm(train_data, val_data, row$epochs, row$window_size, row$hidden_size)
+  output <- train_and_test_lstm(train_data, val_data, 
+                                epochs = row$epochs, 
+                                window_size = row$window_size, 
+                                hidden_size = row$hidden_size)
     
   F1 <- output$metrics$F1[metrics$Activity == "Macro-Average"]
   result <- cbind(row, F1)
@@ -146,6 +148,11 @@ best_parameters <- results[best_index, ]
 
 hidden_size <- best_parameters$hidden_size
 window_size <- best_parameters$window_size
+epochs <- 10
+
+# manually setting them for testing
+hidden_size <- 64
+window_size <- 5
 epochs <- 10
 
 # Debugging / looking at output -------------------------------------------
