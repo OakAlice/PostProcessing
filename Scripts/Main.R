@@ -20,7 +20,8 @@ target_activity <- "Walking" # behaviour that the ecological analyses will be ab
 # Standardise format ------------------------------------------------------
 # data must be saved in Data/Species folders with c(Time, ID, true_classes, generalised_classes, predicted_classes) columns
 # source(file = file.path(base_path, "Scripts", "DataFormatStandardisation.R"))
-
+# save ecological data as:
+# file.path(base_path, "Data", "UnlabelledData", paste0(species, "_unlabelled.csv"))
 
 # Important functions -----------------------------------------------------
 source(file = file.path(base_path, "Scripts", "PerformanceTestingFunctions.R"))

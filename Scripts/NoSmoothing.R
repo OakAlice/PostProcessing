@@ -18,3 +18,17 @@ fwrite(metrics, file.path(base_path, "Output", species, "NoSmoothing_performance
 generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, "NoSmoothing_performance.pdf"))
 
 
+# Calculate ecological results --------------------------------------------
+ecological_data <- fread(file.path(base_path, "Data", "UnlabelledData", paste0(species, "_unlabelled_predicted.csv")))
+# apply the smoothing
+# in this case, nothing
+ecological_data <- ecological_data %>% mutate(smoothed_class = predicted_class)
+eco <- ecological_analyses(smoothing_type = "None", 
+                    test_data = ecological_data, 
+                    target_activity = target_activity)
+question1 <- eco$sequence_summary
+question2 <- eco$hour_proportions
+
+# write these to files
+fwrite(question1, file.path(base_path, "Output", species, "NoSmoothing_eco1.csv"))
+fwrite(question2, file.path(base_path, "Output", species, "NoSmoothing_eco2.csv"))

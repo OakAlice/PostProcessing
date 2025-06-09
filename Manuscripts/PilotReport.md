@@ -50,7 +50,6 @@ By incorporating higher-level inference, and bringing in the sequential element 
 
 ## Where to from here?
 - 5 species (or rather, however many good datasets I can get ahold of)
-- 5 x bootstrapping per species
 - Get back in contact with Dr Hui Yu from Deakin to consider getting his collaboration on this chapter? He and I have already discussed coming up with some kind of project to collaborate on - though I was thinking more of behavioural clustering for him. He did mode based smoothing in some of his papers.
 - Pitch this to Dr Pravna Minasandra from Max Planck Institute of Animal Behaviour? He wrote an awesome paper using hazard functions to determine the natural duration of behaviours - could use this as an additional smoothing method? I am visiting Pravna in July.
 ## Target Journals

@@ -93,7 +93,12 @@ The error I was discussing directly above ended up being how I was switching the
 - My loss is still very high though... I should be aiming for ~1 and instead I'm getting down to ~46 at 20 epochs. I didn't want to risk over-fitting by pushing past that many epochs but maybe I should? Need to do some googling about industry standards.
 - Damn it. Although it got nearly 98 on the validation data, dropped to 77 on the test data so is still worse than doing nothing... whyyyyy. Need to calculate the ecological interpretations so I can get some clarity on this.
 
+Now I am going to work in the **bootstrapping / cross-validation** so that I can get some error bars on these estimates. That involves a semi-major restructuring of the code such that the data is split before I run the analyses. For my last chapter I had a massive amount of writing to disk but I want to minimise that this time around.
+- ==Nope wait... that isn't logically possible== because my training data built the model so there are no valid predictions on that (==which is related to the issue of my HMM learning from the unfairly advantaged 'predictions' in the training data==). If I wanted to bootstrap it, I would have to go back from the start and build a new model all over again. Which is a bit of overkill for this chapter. Therefore, my error bars will just have to be from the multiple datasets.
 
+Okay, instead I am going to get to work on the ecological questions. Fortunately I have some koala predictions I prepared earlier!
+- Ffs! Realised that I actually used the conservative model for my predictions for Gabby when I've used the full model for my study. So I have to rerun the predictions on the unlabelled data. (Yes I could change the pilot model, but I like this many-class model way more)
+- 
 
 
 

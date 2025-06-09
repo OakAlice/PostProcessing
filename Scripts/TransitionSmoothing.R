@@ -24,8 +24,8 @@ summary <- train_data %>%
             sequence_behaviours = as.factor(length(unique(true_class))))
 
 # make a distribution frequency plot to geez it (just curiosity)
-ggplot(summary, aes(x = sequence_length, fill = sequence_behaviours)) +
-  geom_bar(width = 5)
+# ggplot(summary, aes(x = sequence_length, fill = sequence_behaviours)) +
+#   geom_bar(width = 5)
 
 # depending on your dataset there may or may not be a lot of transition sequences to lean from
 # you may have to adjust the x value and play around
@@ -140,3 +140,58 @@ performance <- compute_metrics(test_data$smoothed_class, test_data$true_class)
 metrics <- performance$metrics
 fwrite(metrics, file.path(base_path, "Output", species, "TransitionSmoothing_performance.csv"))
 generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, "TransitionSmoothing_performance.pdf"))
+
+
+
+
+
+# Calculate ecological results --------------------------------------------
+ecological_data <- fread(file.path(base_path, "Data", "UnlabelledData", paste0(species, "_unlabelled_predicted.csv")))
+
+ecological_data <- ecological_data %>%
+  group_by(ID) %>%
+  arrange(Time) %>%
+  mutate(DateTime = as.POSIXct((Time - 719529)*86400, origin = "1970-01-01", tz = "UTC"),
+         time_diff = difftime(DateTime, shift(DateTime, type = "lag")),
+         break_point = ifelse(time_diff > x, 1, 0),
+         break_point = replace_na(break_point, 0),
+         sequence = cumsum(break_point)) %>%
+  group_by(ID, sequence) %>%
+  mutate(
+    previous_class = shift(predicted_class, type = "lag"),
+    change_point = ifelse(previous_class != predicted_class, 1, 0),
+    change_point = replace_na(change_point, 0)
+  )
+
+threshold <- 0.3  # user-defined probability threshold
+ecological_data <- ecological_data %>%
+  left_join(transitions, 
+            by = c("previous_class" = "previous_class", 
+                   "predicted_class" = "followed_by")) %>%
+  mutate(
+    likelihood = case_when(
+      change_point == 1 & (is.na(proportion) | proportion < threshold) ~ "SUSPICIOUS",
+      TRUE ~ "ACCEPTABLE"
+    )
+  ) %>%
+  ungroup() %>%
+  select(!c("break_point", "previous_class", "change_point", "count")) # clean it up
+
+ecological_data <- ecological_data %>%
+  mutate(smoothed_class = ifelse(likelihood == "ACCEPTABLE", predicted_class, NA)
+  ) %>%
+  group_by(ID, sequence) %>% 
+  fill(smoothed_class, .direction = "down") %>%
+  ungroup()
+
+
+# calculate what this means
+eco <- ecological_analyses(smoothing_type = "None", 
+                           test_data = ecological_data, 
+                           target_activity = target_activity)
+question1 <- eco$sequence_summary
+question2 <- eco$hour_proportions
+
+# write these to files
+fwrite(question1, file.path(base_path, "Output", species, "DurationSmoothing_eco1.csv"))
+fwrite(question2, file.path(base_path, "Output", species, "DurationSmoothing_eco2.csv"))

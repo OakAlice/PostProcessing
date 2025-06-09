@@ -77,3 +77,55 @@ performance <- compute_metrics(test_data$smoothed_class, test_data$true_class)
 metrics <- performance$metrics
 fwrite(metrics, file.path(base_path, "Output", species, "DurationSmoothing_performance.csv"))
 generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, "DurationSmoothing_performance.pdf"))
+
+
+
+
+# Calculate ecological results --------------------------------------------
+ecological_data <- fread(file.path(base_path, "Data", "UnlabelledData", paste0(species, "_unlabelled_predicted.csv")))
+
+# apply the smoothing
+ecological_data <- ecological_data %>%
+  arrange(ID, Time) %>%
+  group_by(ID) %>%
+  mutate(
+    change_point = ifelse(shift(predicted_class, type = "lag") == predicted_class, 0, 1),
+    change_point = replace_na(change_point, 0),
+    sequence = cumsum(change_point)
+  ) %>%
+  ungroup()
+
+# go through and check whether each instance is likely legit or not
+predicted_lengths <- ecological_data %>% 
+  group_by(ID, sequence) %>%
+  summarise(behaviour = predicted_class[1], length = length(sequence), .groups = "drop") %>%
+  left_join(train_summary, by = "behaviour") %>%
+  mutate(
+    acceptable = case_when(
+      is.na(p95) ~ "NO MATCHED BEHAVIOUR",
+      length > p95 ~ "ACCEPTABLE",
+      TRUE ~ "SUSPICIOUS"
+    )
+  )
+
+# change the probably illegitimate ones to something else
+predictions_altered <- predicted_lengths %>%
+  mutate(smoothed_class = ifelse(acceptable == "ACCEPTABLE", behaviour, NA)
+  ) %>%
+  group_by(ID) %>% 
+  fill(smoothed_class, .direction = "down") %>%
+  select(ID, sequence, smoothed_class) %>%
+  ungroup()
+
+ecological_data <- left_join(ecological_data, predictions_altered, by = c('ID', 'sequence'))
+
+# calculate what this means
+eco <- ecological_analyses(smoothing_type = "None", 
+                           test_data = ecological_data, 
+                           target_activity = target_activity)
+question1 <- eco$sequence_summary
+question2 <- eco$hour_proportions
+
+# write these to files
+fwrite(question1, file.path(base_path, "Output", species, "DurationSmoothing_eco1.csv"))
+fwrite(question2, file.path(base_path, "Output", species, "DurationSmoothing_eco2.csv"))
