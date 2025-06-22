@@ -1,7 +1,7 @@
 # Testing performance of base predictions ---------------------------------
 
 # loading in the standardised formats
-data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_test_data.csv")))
+data <- fread(file.path(base_path, "Data", "StandardisedPredictions", paste0(species, "_test_data.csv")))
 
 # no smoothing is performed, therefore just duplicate and rename the column without doing anything
 data <- data %>% mutate(smoothed_class = predicted_class)
@@ -24,7 +24,7 @@ ecological_data <- fread(file.path(base_path, "Data", "UnlabelledData", paste0(s
 # in this case, nothing
 ecological_data <- ecological_data %>% mutate(smoothed_class = predicted_class)
 eco <- ecological_analyses(smoothing_type = "None", 
-                    test_data = ecological_data, 
+                    eco_data = ecological_data, 
                     target_activity = target_activity)
 question1 <- eco$sequence_summary
 question2 <- eco$hour_proportions

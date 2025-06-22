@@ -47,7 +47,7 @@ predicted_class <- colnames(predictions)[max.col(predictions, ties.method = "fir
 predictions_df <- cbind(metadata, predictions, predicted_class)
 
 # save this as the koala data for me to run the pilot experiment on
-fwrite(predictions_df, file.path(base_path, "Data", "StandardisedFormat", "Sparkes_Koala_test_data.csv"))
+fwrite(predictions_df, file.path(base_path, "Data", "StandardisedPredictions", "Sparkes_Koala_test_data.csv"))
 
 
 # Apply to the training data as well --------------------------------------
@@ -66,7 +66,7 @@ predictions_df <- cbind(metadata, predicted_class)
 predictions_df <- predictions_df %>% rename(true_class = Activity)
 
 # save this as the koala data for me to run the pilot experiment on
-fwrite(predictions_df, file.path(base_path, "Data", "StandardisedFormat", "Sparkes_Koala_train_data.csv"))
+fwrite(predictions_df, file.path(base_path, "Data", "StandardisedPredictions", "Sparkes_Koala_train_data.csv"))
 
 
 

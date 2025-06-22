@@ -3,19 +3,8 @@
 # begin by hyperparameter tuning and then later retrain the final version
 # code is currently very slow and needs to be vectorised / refactorised
 
-# Split data into training and val ----------------------------------------
-other_data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_train_data.csv"))) %>%
-  na.omit() %>%
-  group_by(ID, true_class) %>%
-  arrange(Time) %>%
-  mutate(row = row_number()) %>%
-  mutate(split = ifelse(row > 0.8 * max(row), "val", "train"))
-
-train_data <- other_data %>% filter(split == "train")
-val_data <- other_data %>% filter(split == "val")
-
-# Convert to the right structure ------------------------------------------
-# Function to format data 
+# Functions ---------------------------------------------------------------
+# Convert to the right structure
 make_lstm_input <- function(data, window_size, class_levels) {
   n_classes <- length(class_levels)
   
@@ -44,15 +33,13 @@ make_lstm_input <- function(data, window_size, class_levels) {
   )
 }
 
-# Training and testing function -------------------------------------------
-train_and_test_lstm <- function(train_data, val_data, epochs, window_size, hidden_size){
+# Train the model
+train_lstm <- function(train_data, class_levels, epochs, window_size, hidden_size){
   
-  class_levels <- levels(factor(train_data$predicted_class))
   n_classes <- length(class_levels)
   
   # format them
   train_input <- make_lstm_input(train_data, window_size, class_levels)
-  val_input <- make_lstm_input(val_data, window_size, class_levels)
   
   model <- nn_module(
     "LSTMSmoother",
@@ -95,6 +82,13 @@ train_and_test_lstm <- function(train_data, val_data, epochs, window_size, hidde
     cat(sprintf("Epoch %d: Loss %.4f\n", epoch, total_loss))
   }
   
+  return(net)
+}
+
+# Apply the model
+apply_lstm <- function(val_data, net, window_size, class_levels){
+  
+  val_input <- make_lstm_input(val_data, window_size, class_levels)
   # calculate
   X_test <- val_input$X
   net$eval()
@@ -108,15 +102,22 @@ train_and_test_lstm <- function(train_data, val_data, epochs, window_size, hidde
   midpoints <- floor(window_size / 2):(floor(window_size / 2) + length(smoothed_idx) - 1)
   val_data$smoothed_class[midpoints] <- class_levels[as.numeric(smoothed_idx)] #+ 1]
   
-  # Recalculate performance and save
-  performance <- compute_metrics(val_data$smoothed_class, val_data$true_class)
-  metrics <- performance$metrics
-  
-  return(list(metrics = metrics,
-              val_data = val_data))
+  return(val_data)
 }
 
-# Hyperparameter tuning ---------------------------------------------------
+# Code --------------------------------------------------------------------
+## Split data into training and val ---------------------------------------
+other_data <- fread(file.path(base_path, "Data", "StandardisedPredictions", paste0(species, "_train_data.csv"))) %>%
+  na.omit() %>%
+  group_by(ID, true_class) %>%
+  arrange(Time) %>%
+  mutate(row = row_number()) %>%
+  mutate(split = ifelse(row > 0.8 * max(row), "val", "train"))
+
+train_data <- other_data %>% filter(split == "train")
+val_data <- other_data %>% filter(split == "val")
+
+## Hyperparameter tuning ---------------------------------------------------
 results <- list()
 smoothed_predictions <- list()
 
@@ -127,45 +128,80 @@ parameters <- expand.grid(window_size = c(3, 5),
 for (i in 1:nrow(parameters)){
   row <- parameters[i, ]
   
-  output <- train_and_test_lstm(train_data, val_data, 
-                                epochs = row$epochs, 
-                                window_size = row$window_size, 
-                                hidden_size = row$hidden_size)
+  class_levels <- levels(factor(train_data$predicted_class))
+  net <- train_lstm(train_data, 
+                       class_levels, 
+                       epochs = row$epochs,
+                       window_size = row$window_size, 
+                       hidden_size = row$hidden_size)
+  
+  smoothed_data <- apply_lstm(val_data, 
+                              net, 
+                              window_size = row$window_size, 
+                              class_levels)
+  
+  # Recalculate performance and save
+  performance <- compute_metrics(smoothed_data$smoothed_class, smoothed_data$true_class)
     
-  F1 <- output$metrics$F1[metrics$Activity == "Macro-Average"]
+  F1 <- performance$metrics$F1[metrics$Activity == "Macro-Average"]
   result <- cbind(row, F1)
   results[[i]] <- result
   
-  preds <- output$val_data %>% dplyr::select(Time, ID, true_class, predicted_class, smoothed_class)
+  preds <- smoothed_data %>% dplyr::select(Time, ID, true_class, predicted_class, smoothed_class)
     
   smoothed_predictions[[i]] <- preds
 }
 
-# Find the best parameters ------------------------------------------------
+## Find the best parameters -----------------------------------------------
 results <- bind_rows(results)
 best_index <- which.max(results$F1)
 best_parameters <- results[best_index, ]
 
-hidden_size <- best_parameters$hidden_size
-window_size <- best_parameters$window_size
-epochs <- 10
-
-# The final build and results ---------------------------------------------
-train_data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_train_data.csv"))) %>%
+## The final build --------------------------------------------------------
+train_data <- fread(file.path(base_path, "Data", "StandardisedPredictions", paste0(species, "_train_data.csv"))) %>%
   na.omit() %>%
   arrange(ID, Time)
-test_data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_test_data.csv"))) %>%
+test_data <- fread(file.path(base_path, "Data", "StandardisedPredictions", paste0(species, "_test_data.csv"))) %>%
   na.omit() %>%
   arrange(ID, Time)
 
-output <- train_and_test_lstm(train_data, test_data, epochs, window_size, hidden_size)
-test_data <- output$val_data %>%
-  dplyr::select(Time, ID, true_class, predicted_class, smoothed_class)
-metrics <- output$metrics
+net <- train_lstm(train_data, 
+                  class_levels, 
+                  epochs = best_parameters$epochs,
+                  window_size = best_parameters$window_size, 
+                  hidden_size = best_parameters$hidden_size)
+
+smoothed_data <- apply_lstm(test_data, 
+                            net, 
+                            window_size = best_parameters$window_size, 
+                            class_levels)
+
+## Recalculate performance and save ---------------------------------------
+performance <- compute_metrics(smoothed_data$smoothed_class, smoothed_data$true_class)
+metrics <- performance$metrics
 
 fwrite(metrics, file.path(base_path, "Output", species, "LSTMSmoothing_performance.csv"))
 generate_confusion_plot(performance$conf_matrix_padded,
                         save_path = file.path(base_path, "Output", species, "LSTMSmoothing_performance.pdf"))
+
+# Calculate ecological results --------------------------------------------
+ecological_data <- fread(file.path(base_path, "Data", "UnlabelledData", paste0(species, "_unlabelled_predicted.csv")))
+
+smoothed_ecological_data <- apply_lstm(ecological_data, 
+                            net, 
+                            window_size = best_parameters$window_size, 
+                            class_levels)
+
+# calculate what this means
+eco <- ecological_analyses(smoothing_type = "LSTM", 
+                           eco_data = smoothed_ecological_data, 
+                           target_activity = target_activity)
+question1 <- eco$sequence_summary
+question2 <- eco$hour_proportions
+
+# write these to files
+fwrite(question1, file.path(base_path, "Output", species, "LSTMSmoothing_eco1.csv"))
+fwrite(question2, file.path(base_path, "Output", species, "LSTMSmoothing_eco2.csv"))
 
 
 # Notes -------------------------------------------------------------------

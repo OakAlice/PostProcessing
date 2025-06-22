@@ -2,7 +2,7 @@
 # a simple ML HMM implementation to smooth the data
 
 # Extract parameters from the training data -------------------------------
-  train_data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_train_data.csv"))) %>%
+  train_data <- fread(file.path(base_path, "Data", "StandardisedPredictions", paste0(species, "_train_data.csv"))) %>%
     na.omit()
   
   # small bit of data for play
@@ -55,7 +55,7 @@
   # see more notes in obsidian workbook
   
 # Apply this to the test predictions ---------------------------------
-test_data <- fread(file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_test_data.csv"))) %>%
+test_data <- fread(file.path(base_path, "Data", "StandardisedPredictions", paste0(species, "_test_data.csv"))) %>%
   as.data.frame() %>%
   arrange(ID, Time) 
 
@@ -67,3 +67,24 @@ performance <- compute_metrics(test_data$smoothed_class, test_data$true_class)
 metrics <- performance$metrics
 fwrite(metrics, file.path(base_path, "Output", species, "HMMSmoothing_performance.csv"))
 generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, "HMMSmoothing_performance.pdf"))
+
+
+# Calculate ecological results --------------------------------------------
+ecological_data <- fread(file.path(base_path, "Data", "UnlabelledData", paste0(species, "_unlabelled_predicted.csv")))
+
+# apply HMM
+ecological_data <- ecological_data %>%
+  as.data.frame() %>%
+  arrange(ID, Time) 
+ecological_data$smoothed_class <- viterbi(hmm_model, ecological_data$predicted_class)
+
+# calculate what this means
+eco <- ecological_analyses(smoothing_type = "HMM", 
+                           eco_data = ecological_data, 
+                           target_activity = target_activity)
+question1 <- eco$sequence_summary
+question2 <- eco$hour_proportions
+
+# write these to files
+fwrite(question1, file.path(base_path, "Output", species, "HMMSmoothing_eco1.csv"))
+fwrite(question2, file.path(base_path, "Output", species, "HMMSmoothing_eco2.csv"))

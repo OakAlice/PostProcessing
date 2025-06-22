@@ -17,7 +17,7 @@ Step 1 is to find all the smoothing types that have been tried and load in their
 ```{r bind, include = FALSE}
 metrics_list <- list.files(
   file.path(base_path, "Output", species),
-  pattern = "*?.csv",
+  pattern = "*?_performance.csv",
   full.names = TRUE
 )
 
@@ -31,11 +31,17 @@ metrics <- bind_rows(metrics) %>%
   mutate(
     Activity = gsub("Class: ", "", Activity),
     smoothing_type = gsub("_performance.csv", "", smoothing_type)
-  )
+  ) %>%
+  select(!Prevelance) %>%
+  na.omit()
 
 # add levels so its easier to plot later
 metrics$smoothing_type <- factor(metrics$smoothing_type, levels = c("NoSmoothing", "ModeSmoothing", "DurationSmoothing", "ConfusionSmoothing", "TransitionSmoothing", "HMMSmoothing", "BayesianSmoothing", "LSTMSmoothing"))
 
+```
+```{r}
+# display this
+print(metrics %>% filter(Activity == "Macro-Average"))
 ```
 
 Step 2 is to compare these results. Not all trials will have all types, so just compare what's there.
@@ -58,9 +64,20 @@ ggplot(metrics_long, aes(x = Activity, y = Score, fill = smoothing_type)) +
 
 ```
 
-Step 3 is to look at how some of the ecological interpretations change when we use the different smoothing methods. Maybe by visualising the sequences or by looking at the longest durations etc. I haven't gotten around to this point yet though so will return later.
+```{r simp_plot, fig.width = 6, fig.height = 6}
+# and a simplified plot as 
+simplified_metrics <- metrics_long %>% filter(Activity == "Macro-Average")
+ggplot(simplified_metrics, aes(x = Activity, y = Score, fill = smoothing_type)) +
+  geom_point(stat = "identity", size = 3, shape = 21, colour = "white") +
+  facet_wrap(~ Metric, scales = "free_y", ncol = 2) +
+  scale_fill_manual(values = my_colours) +
+  my_theme() +
+  labs(x = "Activity", y = "Score", fill = "Smoothing Type") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-Step 4 is to make a statement about which of the methods I think is better... Hopefully I can make this an automated statement somehow. A simple version of this would be to simply pick the one with the greater F1 score.
+```
+
+Step 3 is to make a statement about which of the methods I think is better... In terms of the performance, pick the one with the greater macro-average F1 score.
 
 ```{r recommend}
 
@@ -75,4 +92,41 @@ improvement <- metrics$F1[metrics$Activity == "Macro-Average" & metrics$smoothin
 paste0("The optimal post-processing method, as defined by the greatest F1 score, is the ", best, " method. Use of this post-processing smoothing method increases F1 by ", round(improvement,5), ".")
 
 ```
+Step 4 is to look at how some of the ecological interpretations change when we use the different smoothing methods. Assess the results of question 1 and question 2. 
+```{r ecological, fig.height=3}
+
+# load in the ecological interpretations
+q1_answer_files <- list.files(path = file.path(base_path, "Output", species), pattern = "_eco1\\.csv$", full.names = TRUE)
+q1_answers <- lapply(q1_answer_files, read.csv) %>% bind_rows()
+q1_answers$smoothing_style <- factor(q1_answers$smoothing_style, levels = c("None", "Mode", "Duration", "Confusion", "Transition", "Bayesian", "HMM", "LSTM"))
+
+fwrite(q1_answers, file.path(base_path, "Output", species, "eco1_answers.csv"))
+
+# make a plot showing this
+ggplot(q1_answers) +
+  geom_point(aes(x = smoothing_style, y = mean_frequency), colour = "goldenrod") +
+  geom_errorbar(aes(x = smoothing_style, 
+                    ymin = mean_frequency - sd_frequency, 
+                    ymax = mean_frequency + sd_frequency),
+                width = 0.2, colour = "goldenrod") +
+  my_theme() +
+  labs(x = "Smoothing Type", y = "Average Frequency")
+
+# and for duration
+ggplot(q1_answers) +
+  geom_point(aes(x = smoothing_style, y = mean_duration), colour = "goldenrod") +
+  geom_errorbar(aes(x = smoothing_style, 
+                    ymin = mean_duration - sd_duration, 
+                    ymax = mean_duration + sd_duration),
+                width = 0.2, colour = "goldenrod") +
+  my_theme() +
+  labs(x = "Smoothing Type", y = "Average duration")
+
+```
+
+
+
+
+
+
 

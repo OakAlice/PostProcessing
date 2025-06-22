@@ -12,4 +12,4 @@ data_table <- bind_rows(data) %>%
   select(Time, predicted_classes, ID)
 
 # save this back to the standardised location
-fwrite(data_table, file.path(base_path, "Data", "StandardisedFormat", paste0(species, "_raw_standardised.csv")))
+fwrite(data_table, file.path(base_path, "Data", "StandardisedPredictions", paste0(species, "_raw_standardised.csv")))

@@ -1,0 +1,7 @@
+- 20/06: Sourcing data from the BEBE paper (which, by the way, is amazing -> https://movementecologyjournal.biomedcentral.com/articles/10.1186/s40462-024-00511-8#Sec2). I am going to use this data for the full study. I downloaded all the "formatted" data from the zenodo link: https://zenodo.org/records/7947104
+	- wtf are they in such weird formats?? This isn't half as user friendly as they claim it is
+	- All the data are stored as 'clips' - does that refer to videos?
+	- Looks like they have removed 'Time'... which means I have limited ability to discern true transitions... in all cases where I can get the raw data with Time, I should do that.
+	- Therefore, for some of the datasets I went back to the original papers and extracted the original data instead.
+	- I set up Vehkaoja_Dog and Ladds_Seal to run for ages.
+- 22/06: It is now Sunday evening and I have processed features for the two named datasets and will run them through the post-processing workflow I created earlier. I will definitely need some kind of report looking at the "realisticness" of the training data. Potentially I could look at how much of the data occurred in sequence and then have another metric of how many transitions were represented.

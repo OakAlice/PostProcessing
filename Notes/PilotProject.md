@@ -97,8 +97,16 @@ Now I am going to work in the **bootstrapping / cross-validation** so that I can
 - ==Nope wait... that isn't logically possible== because my training data built the model so there are no valid predictions on that (==which is related to the issue of my HMM learning from the unfairly advantaged 'predictions' in the training data==). If I wanted to bootstrap it, I would have to go back from the start and build a new model all over again. Which is a bit of overkill for this chapter. Therefore, my error bars will just have to be from the multiple datasets.
 
 Okay, instead I am going to get to work on the ecological questions. Fortunately I have some koala predictions I prepared earlier!
-- Ffs! Realised that I actually used the conservative model for my predictions for Gabby when I've used the full model for my study. So I have to rerun the predictions on the unlabelled data. (Yes I could change the pilot model, but I like this many-class model way more)
-- 
+- Ffs! Realised that I actually used the conservative model for my predictions for Gabby when I've used the full model for my study. So I have to rerun the predictions on the unlabelled data. (Yes I could change the pilot model, but I like this many-class model way more) --> didn't take too long actually
+- Running the different post-processings on the data is going well and I'm seeing massive changes in the implications depending on the smoothing method - YES!!! So exciting!! 
+- Well, the results for HMM look really confusing to me. The HMM calculates the average duration of a walk as 1 second ==and I think "this must be bad", but then when I look at it, it clearly is a way better representation of natural movement== than the "better" models. I need to really make sure there aren't spurious code in here before I jump to conclusions though... Hmmmm.
+- Definitely need to go through and refactor and improve all my code. It's disgusting at the moment
+#### 10062025
+Have gone through and refactored and formatted the code so that each method looks roughly the same. This is mainly for neatness sake, but also so that its easier for me to update and change later as I will no-doubt change this code a lot as I go on. I also changed it so that the average frequency is given as average per day (6am-6am loop) with an sd. 
+
+
+
+
 
 
 
