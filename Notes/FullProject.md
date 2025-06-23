@@ -4,4 +4,8 @@
 	- Looks like they have removed 'Time'... which means I have limited ability to discern true transitions... in all cases where I can get the raw data with Time, I should do that.
 	- Therefore, for some of the datasets I went back to the original papers and extracted the original data instead.
 	- I set up Vehkaoja_Dog and Ladds_Seal to run for ages.
-- 22/06: It is now Sunday evening and I have processed features for the two named datasets and will run them through the post-processing workflow I created earlier. I will definitely need some kind of report looking at the "realisticness" of the training data. Potentially I could look at how much of the data occurred in sequence and then have another metric of how many transitions were represented.
+- 22/06: It is now Sunday evening and I have processed features for the two named datasets and now will build a basic ML model for each of them.
+	- ==I will definitely need some kind of report looking at the "realisticness" of the training data. Potentially I could look at how much of the data occurred in sequence and then have another metric of how many transitions were represented? I think this will be an important co-variable.==
+- 23/06: Breathe it out breathe it out breathe it out. Trying not to have a panic attack about amberley. Hyperfocus on work?
+	- I started tuning the model for the dogs and for some reason it sucks? I've stopped it and having a go on a subset of data until I find if there's a bug here?
+	- Something is definitely wrong, the performance is so low... I need to step inside the parameters and see where the error is.

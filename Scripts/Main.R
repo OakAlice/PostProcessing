@@ -28,7 +28,7 @@ target_activity <- "Walking" # behaviour that the ecological analyses will be ab
 # Format Data -------------------------------------------------------------
 # collecting the data from various sources and formatting it to standardised structure
 source(file = file.path(base_path, "Scripts", "DataFormatting", "FormatData.R"))
-
+source(file = file.path(base_path, "Scripts", "ModelBuilding", "BuildModel.R"))
 
 
 
