@@ -1,14 +1,12 @@
 # Master script for building the models for any given species etc ---------
 
-
 p_load(rBayesianOptimization, 
        ranger)
 
-species <- "Vehkaoja_Dog"
+species <- "Ladds_Seal"
 
 source(file = file.path(base_path, "Scripts", "ModelBuilding", "HPOFunctions.R"))
 source(file = file.path(base_path, "Scripts", "ModelBuilding", "TestFunctions.R"))
-
 
 # Split out test data -----------------------------------------------------
 data <- fread(file.path(base_path, "Data", species, "Feature_data.csv"))
@@ -17,7 +15,6 @@ test_IDs <- sample(unique(data$ID), 0.2*length(unique(data$ID)))
 
 test_data <- data %>% filter(ID %in% test_IDs)
 other_data <- data %>% filter(!ID %in% test_IDs)                      
-
 
 # Model design: hyperparameter tuning -------------------------------------
 # Based on a random forest, what hyperparamaters are best?
@@ -28,7 +25,8 @@ bounds <- list(
 )
 
 other_data <- other_data %>% as.data.table() %>%
-  group_by(ID, Activity)
+  group_by(ID, Activity) %>%
+  slice(1:100)
 
 # this is optimised for weighted F1 score
 results <- BayesianOptimization(
@@ -58,8 +56,7 @@ best_performance <- results$Best_Value # just for interest
 other_feature_data <- as.data.table(other_data)
 clean_cols <- removeBadFeatures(other_feature_data, var_threshold = 0.5, corr_threshold = 0.9)
 training_data <- other_feature_data %>%
-  select(c(!!!syms(clean_cols), "Activity", "ID")) %>% 
-  select(-c(Time, ID)) %>%
+  select(c(!!!syms(clean_cols), "Activity")) %>%
   na.omit() %>%
   mutate(Activity = as.factor(Activity))
     
@@ -79,10 +76,8 @@ saveRDS(RF_model, file.path(base_path, "Data", species, "Activity_model.rds"))
 # Make predictions --------------------------------------------------------
 test_feature_data <- as.data.table(test_data)
 numeric_testing_data <- test_feature_data %>%
-  select(c(!!!syms(clean_cols), "Activity", "ID", "Time")) %>% 
+  select(c(!!!syms(clean_cols))) %>% 
   na.omit() %>%
-  select(clean_cols) %>%
-  select(-Time) %>%
   as.matrix()
 testing_metadata <- test_feature_data %>%
   select(c(!!!syms(clean_cols), "Activity", "ID", "Time")) %>% 
@@ -98,7 +93,6 @@ predicted_classes <- factor(predictions$predictions, levels = levels(ground_trut
 
 metrics <- compute_metrics(predicted_classes, ground_truth_labels)
 predictions <- cbind(true_classes = ground_truth_labels, predicted_classes = predicted_classes)
-
 
 # Write to CSV
 write.csv(metrics$metrics, file = file.path(base_path, "Data", species, paste0("Original_performance_metrics.csv")), row.names = FALSE)

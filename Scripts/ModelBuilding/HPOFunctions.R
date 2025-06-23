@@ -26,8 +26,7 @@ RFModelOptimisation <- function(feature_data, data_split, number_trees, mtry, ma
     
     clean_cols <- removeBadFeatures(feature_data, var_threshold = 0.5, corr_threshold = 0.9)
     clean_feature_data <- feature_data %>%
-      select(c(!!!syms(clean_cols), "Activity", "ID")) %>% 
-      select(-Time) %>%
+      select(c(!!!syms(clean_cols), "Activity", "ID", "Time")) %>% 
       na.omit()
   
     f1_scores <- list()  # List to store F1-scores
@@ -81,11 +80,11 @@ RFModelOptimisation <- function(feature_data, data_split, number_trees, mtry, ma
           
           # Separate into training and testing
           training_data <- training_data %>%
-            select(-c(ID)) %>%
+            select(-c(ID, Time)) %>%
             mutate(Activity = as.factor(Activity))
           
           validation_data <- validation_data %>%
-            select(-c(ID)) %>%
+            select(-c(ID, Time)) %>%
             mutate(Activity = as.factor(Activity))
           
           message("data split")
