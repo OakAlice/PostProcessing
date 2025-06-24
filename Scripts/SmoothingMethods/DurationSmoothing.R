@@ -81,20 +81,25 @@ generate_confusion_plot(performance$conf_matrix_padded,
                         save_path = file.path(base_path, "Output", species, "DurationSmoothing_performance.pdf"))
 
 # Calculate ecological results --------------------------------------------
-ecological_data <- fread(file.path(base_path, "Data", "UnlabelledData", paste0(species, "_unlabelled_predicted.csv")))
-
-# Apply the smoothing
-ecological_data <- identify_sequences(ecological_data, "predicted_class")
-ecological_data <- smooth_durations(ecological_data, train_summary)
-
-# Calculate what this means
-eco <- ecological_analyses(smoothing_type = "Duration", 
-                           eco_data = ecological_data, 
-                           target_activity = target_activity)
-
-question1 <- eco$sequence_summary
-question2 <- eco$hour_proportions
-
-# Write outputs
-fwrite(question1, file.path(base_path, "Output", species, "DurationSmoothing_eco1.csv"))
-fwrite(question2, file.path(base_path, "Output", species, "DurationSmoothing_eco2.csv"))
+if (file.exists(file.path(base_path, "Data", species, "Unlabelled_predictions.csv"))){
+  ecological_data <- fread(file.path(base_path, "Data", species, "Unlabelled_predictions.csv"))
+    
+  # Apply the smoothing
+  ecological_data <- identify_sequences(ecological_data, "predicted_class")
+  ecological_data <- smooth_durations(ecological_data, train_summary)
+  
+  # Calculate what this means
+  eco <- ecological_analyses(smoothing_type = "Duration", 
+                             eco_data = ecological_data, 
+                             target_activity = target_activity)
+  
+  question1 <- eco$sequence_summary
+  question2 <- eco$hour_proportions
+  
+  # Write outputs
+  fwrite(question1, file.path(base_path, "Output", species, "DurationSmoothing_eco1.csv"))
+  fwrite(question2, file.path(base_path, "Output", species, "DurationSmoothing_eco2.csv"))
+  
+} else {
+  print("there is no ecological data for this dataset")
+}

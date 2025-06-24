@@ -9,3 +9,6 @@
 - 23/06: Breathe it out breathe it out breathe it out. Trying not to have a panic attack about amberley. Hyperfocus on work?
 	- I started tuning the model for the dogs and for some reason it sucks? I've stopped it and having a go on a subset of data until I find if there's a bug here?
 	- Something is definitely wrong, the performance is so low... I need to step inside the parameters and see where the error is.
+- 24/06: Have also expanded into the new datasets that have very specific, and frankly not that useful behavioural labels. Because I haven't completed the "behaviour quality" pre-processing project yet, I don't have strong legs to stand on regarding rejecting the existing behavioural categories. However, the performance is appalling. Therefore, do I go to the "generalised" labels which will do better? Conflicted...
+	- Changed it to give probability and that meant updating a few things
+	- changed to weighted by class prevalence 

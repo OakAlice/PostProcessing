@@ -3,15 +3,14 @@
 p_load(rBayesianOptimization, 
        ranger)
 
-species <- "Ladds_Seal"
-
 source(file = file.path(base_path, "Scripts", "ModelBuilding", "HPOFunctions.R"))
 source(file = file.path(base_path, "Scripts", "ModelBuilding", "TestFunctions.R"))
 
 # Split out test data -----------------------------------------------------
 data <- fread(file.path(base_path, "Data", species, "Feature_data.csv"))
 
-test_IDs <- sample(unique(data$ID), 0.2*length(unique(data$ID)))
+test_IDs <- sample(unique(data$ID), 0.4*length(unique(data$ID)))
+print(paste0("number of individuals in the test set: ", length(test_IDs)))
 
 test_data <- data %>% filter(ID %in% test_IDs)
 other_data <- data %>% filter(!ID %in% test_IDs)                      
@@ -25,8 +24,8 @@ bounds <- list(
 )
 
 other_data <- other_data %>% as.data.table() %>%
-  group_by(ID, Activity) %>%
-  slice(1:100)
+  group_by(ID, Activity) #%>%
+  #slice(1:100) ## REMOVE THIS WHEN YOU're SERIOUES
 
 # this is optimised for weighted F1 score
 results <- BayesianOptimization(
@@ -41,7 +40,7 @@ results <- BayesianOptimization(
   },
   bounds = bounds,
   init_points = 2,
-  n_iter = 3,
+  n_iter = 5,
   acq = "ucb",
   kappa = 2.576 
 )
@@ -60,6 +59,12 @@ training_data <- other_feature_data %>%
   na.omit() %>%
   mutate(Activity = as.factor(Activity))
     
+# weight by class frequency
+class_freq <- table(training_data$Activity)
+class_weights <- 1 / class_freq
+class_weights <- class_weights / sum(class_weights)
+weight <- class_weights[training_data$Activity]
+
 RF_model <- ranger(
   dependent.variable.name = "Activity",
   data = training_data,
@@ -67,7 +72,9 @@ RF_model <- ranger(
   mtry = best_mtry,
   max.depth = best_max_depth,
   classification = TRUE,
-  importance = "impurity"
+  probability = TRUE,
+  importance = "impurity",
+  case.weights = weight
 )
 
 # save this model
@@ -75,25 +82,29 @@ saveRDS(RF_model, file.path(base_path, "Data", species, "Activity_model.rds"))
 
 # Make predictions --------------------------------------------------------
 test_feature_data <- as.data.table(test_data)
-numeric_testing_data <- test_feature_data %>%
-  select(c(!!!syms(clean_cols))) %>% 
-  na.omit() %>%
-  as.matrix()
-testing_metadata <- test_feature_data %>%
-  select(c(!!!syms(clean_cols), "Activity", "ID", "Time")) %>% 
-  na.omit() %>%
-  select("Activity", "ID", "Time")
-ground_truth_labels <- factor(testing_metadata$Activity)
+complete_cases <- test_feature_data %>%
+  select(all_of(c(clean_cols, "Activity", "ID", "Time"))) %>%
+  na.omit()
 
+numeric_testing_data <- complete_cases %>%
+  select(all_of(clean_cols)) %>%
+  as.matrix()
 if (anyNA(numeric_testing_data)) message("Validation data contains missing values!")
 
-# Make predictions
-predictions <- predict(RF_model, data = numeric_testing_data)
-predicted_classes <- factor(predictions$predictions, levels = levels(ground_truth_labels))
+testing_metadata <- complete_cases %>%
+  select(Activity, ID, Time)
+ground_truth_labels <- factor(testing_metadata$Activity)
 
-metrics <- compute_metrics(predicted_classes, ground_truth_labels)
-predictions <- cbind(true_classes = ground_truth_labels, predicted_classes = predicted_classes)
+# Make predictions
+output <- predict(RF_model, data = numeric_testing_data, probability = TRUE)
+predictions <- output$predictions
+predicted_class <- colnames(predictions)[max.col(predictions, ties.method = "first")]
+predictions_df <- cbind(testing_metadata, predictions, predicted_class)
+predictions_df <- predictions_df %>% rename(true_class = Activity)
+
+metrics <- compute_metrics(predicted_classes = as.factor(predictions_df$predicted_class), 
+                           ground_truth_labels = as.factor(predictions_df$true_class))
 
 # Write to CSV
 write.csv(metrics$metrics, file = file.path(base_path, "Data", species, paste0("Original_performance_metrics.csv")), row.names = FALSE)
-write.csv(predictions, file = file.path(base_path, "Data", species, paste0("Original_predictions.csv")), row.names = FALSE)
+write.csv(predictions_df, file = file.path(base_path, "Data", species, paste0("Original_predictions.csv")), row.names = FALSE)

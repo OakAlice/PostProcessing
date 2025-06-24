@@ -1,7 +1,7 @@
 # Main Script -------------------------------------------------------------
 
-base_path <- "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
-# base_path <- "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
+# base_path <- "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
+base_path <- "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
 
 #install.packaged("pacman")
 library(pacman)
@@ -18,30 +18,19 @@ p_load(tidyverse,
        rlang,
        tsfeatures)
 
-
 # Define variables for this run -------------------------------------------
-species <- "Sparkes_Koala" # dataset name
-target_activity <- "Walking" # behaviour that the ecological analyses will be about
-
-
+species <- "Ladds_Seal" # dataset name
+target_activity <- "swimming" # behaviour that the ecological analyses will be about
 
 # Format Data -------------------------------------------------------------
 # collecting the data from various sources and formatting it to standardised structure
-source(file = file.path(base_path, "Scripts", "DataFormatting", "FormatData.R"))
-source(file = file.path(base_path, "Scripts", "ModelBuilding", "BuildModel.R"))
-
-
+source(file = file.path(base_path, "Scripts", "DataFormatting", paste0(species, "_Formatting.R")))
 
 # Make the Model ----------------------------------------------------------
-# based on the training data, tune, train, and test a model and generate predictions
+# tune, train, and test a model and generate predictions on the test data
+source(file = file.path(base_path, "Scripts", "ModelBuilding", "BuildModel.R"))
 
-
-
-
-
-
-
-
+# Compare the smoothing options -------------------------------------------
 # Important functions -----------------------------------------------------
 source(file = file.path(base_path, "Scripts", "PerformanceTestingFunctions.R"))
 source(file = file.path(base_path, "Scripts", "EcologicalTestingFunctions.R"))

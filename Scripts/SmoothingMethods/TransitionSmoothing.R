@@ -107,7 +107,7 @@ transition_probs_melted <- transition_probs %>%
 
 # I can then use these percentages to assess the validity of the transitions we see in the predictions
 ## Find all transitions in the predictions data ---------------------------
-test_data <- fread(file.path(base_path, "Data", "StandardisedPredictions", paste0(species, "_test_data.csv")))
+test_data <- fread(file.path(base_path, "Data", species, "Original_predictions.csv"))
 
 test_data <- find_suspect_transitions(test_data, transition_probs_melted, x = 10, threshold = 0.3)
 
@@ -124,17 +124,23 @@ generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(bas
 
 
 # Calculate ecological results --------------------------------------------
-ecological_data <- fread(file.path(base_path, "Data", "UnlabelledData", paste0(species, "_unlabelled_predicted.csv")))
-ecological_data <- find_suspect_transitions(ecological_data, transition_probs_melted, x = 10, threshold = 0.3)
-ecological_data <- update_suspect_transitions(ecological_data)
+if (file.exists(file.path(base_path, "Data", species, "Unlabelled_predictions.csv"))){
+  
+  ecological_data <- fread(file.path(base_path, "Data", species, "Unlabelled_predictions.csv"))
+  ecological_data <- find_suspect_transitions(ecological_data, transition_probs_melted, x = 10, threshold = 0.3)
+  ecological_data <- update_suspect_transitions(ecological_data)
+  
+  # calculate what this means
+  eco <- ecological_analyses(smoothing_type = "Transition", 
+                             eco_data = ecological_data, 
+                             target_activity = target_activity)
+  question1 <- eco$sequence_summary
+  question2 <- eco$hour_proportions
+  
+  # write these to files
+  fwrite(question1, file.path(base_path, "Output", species, "TransitionSmoothing_eco1.csv"))
+  fwrite(question2, file.path(base_path, "Output", species, "TransitionSmoothing_eco2.csv"))
 
-# calculate what this means
-eco <- ecological_analyses(smoothing_type = "Transition", 
-                           eco_data = ecological_data, 
-                           target_activity = target_activity)
-question1 <- eco$sequence_summary
-question2 <- eco$hour_proportions
-
-# write these to files
-fwrite(question1, file.path(base_path, "Output", species, "TransitionSmoothing_eco1.csv"))
-fwrite(question2, file.path(base_path, "Output", species, "TransitionSmoothing_eco2.csv"))
+} else {
+  print("there is no ecological data for this dataset")
+}

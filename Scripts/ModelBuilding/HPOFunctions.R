@@ -28,6 +28,11 @@ RFModelOptimisation <- function(feature_data, data_split, number_trees, mtry, ma
     clean_feature_data <- feature_data %>%
       select(c(!!!syms(clean_cols), "Activity", "ID", "Time")) %>% 
       na.omit()
+    
+    if (mtry > length(clean_cols)){
+      print("mtry too big, making max clean cols")
+      mtry <- length(clean_cols)
+    }
   
     f1_scores <- list()  # List to store F1-scores
     
@@ -35,7 +40,6 @@ RFModelOptimisation <- function(feature_data, data_split, number_trees, mtry, ma
     for (i in 1:3) {
       message(i)
       flush.console()
-      
       
       if (data_split == "chronological"){
         tryCatch({
@@ -73,7 +77,7 @@ RFModelOptimisation <- function(feature_data, data_split, number_trees, mtry, ma
         
         tryCatch({
           #Create training and validation data, split by ID
-          test_IDs <- sample(unique(clean_feature_data$ID), 0.2*length(unique(clean_feature_data$ID)))
+          test_IDs <- sample(unique(clean_feature_data$ID), 0.3*length(unique(clean_feature_data$ID)))
           
           validation_data <- clean_feature_data %>% filter(ID %in% test_IDs)
           training_data <- clean_feature_data %>% filter(!ID %in% test_IDs)                      
@@ -98,6 +102,12 @@ RFModelOptimisation <- function(feature_data, data_split, number_trees, mtry, ma
       # Train RF model
       tryCatch({
         
+        # weight by class frequency
+        class_freq <- table(training_data$Activity)
+        class_weights <- 1 / class_freq
+        class_weights <- class_weights / sum(class_weights)
+        weight <- class_weights[training_data$Activity]
+        
         RF_model <- ranger(
           dependent.variable.name = "Activity",
           data = training_data,
@@ -105,7 +115,8 @@ RFModelOptimisation <- function(feature_data, data_split, number_trees, mtry, ma
           mtry = mtry,
           max.depth = max_depth,
           classification = TRUE,
-          importance = "impurity"
+          importance = "impurity",
+          case.weights = weight
         )
         
         message("model trained")

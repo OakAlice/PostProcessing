@@ -70,21 +70,25 @@ generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(bas
 
 
 # Calculate ecological results --------------------------------------------
-ecological_data <- fread(file.path(base_path, "Data", "UnlabelledData", paste0(species, "_unlabelled_predicted.csv")))
-
-# apply HMM
-ecological_data <- ecological_data %>%
-  as.data.frame() %>%
-  arrange(ID, Time) 
-ecological_data$smoothed_class <- viterbi(hmm_model, ecological_data$predicted_class)
-
-# calculate what this means
-eco <- ecological_analyses(smoothing_type = "HMM", 
-                           eco_data = ecological_data, 
-                           target_activity = target_activity)
-question1 <- eco$sequence_summary
-question2 <- eco$hour_proportions
-
-# write these to files
-fwrite(question1, file.path(base_path, "Output", species, "HMMSmoothing_eco1.csv"))
-fwrite(question2, file.path(base_path, "Output", species, "HMMSmoothing_eco2.csv"))
+if (file.exists(file.path(base_path, "Data", species, "Unlabelled_predictions.csv"))){
+  ecological_data <- fread(file.path(base_path, "Data", species, "Unlabelled_predictions.csv"))
+  
+  # apply HMM
+  ecological_data <- ecological_data %>%
+    as.data.frame() %>%
+    arrange(ID, Time) 
+  ecological_data$smoothed_class <- viterbi(hmm_model, ecological_data$predicted_class)
+  
+  # calculate what this means
+  eco <- ecological_analyses(smoothing_type = "HMM", 
+                             eco_data = ecological_data, 
+                             target_activity = target_activity)
+  question1 <- eco$sequence_summary
+  question2 <- eco$hour_proportions
+  
+  # write these to files
+  fwrite(question1, file.path(base_path, "Output", species, "HMMSmoothing_eco1.csv"))
+  fwrite(question2, file.path(base_path, "Output", species, "HMMSmoothing_eco2.csv"))
+} else {
+  print("there is no ecological data for this dataset")
+}
