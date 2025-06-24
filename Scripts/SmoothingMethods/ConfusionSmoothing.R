@@ -2,7 +2,7 @@
 # not all predictions are created equal
 # the confusion matrix from the model creation step tells us information about which predictions are better than others
 # using this information we will improve on duration based smoothing
-# TODO: Is there an issue of leakage here because learning from test data???
+# TODO: Is learning from the training data really meaningles here?
 
 # Function ----------------------------------------------------------------
 applying_confusion_changes <- function(data, confusion_likelihood, threshold = 0.5){
@@ -78,8 +78,9 @@ applying_confusion_changes <- function(data, confusion_likelihood, threshold = 0
 # Code --------------------------------------------------------------------
 ## Test -------------------------------------------------------------------
 # generate the confusion matrix
-data <- fread(file.path(base_path, "Data", "StandardisedPredictions", paste0(species, "_test_data.csv")))
-performance <- compute_metrics(data$predicted_class, data$true_class)
+train_data <- fread(file.path(base_path, "Data", species, "Training_predictions.csv")) %>%
+  na.omit()
+performance <- compute_metrics(as.factor(train_data$predicted_class), as.factor(train_data$true_class))
 confusion <- as.matrix(performance$conf_matrix_padded)
 
 # generate a miscalssification likelihood table
@@ -96,10 +97,13 @@ confusion_likelihood <- as.data.frame(as.table(confusion)) %>%
   arrange(true_class, desc(likelihood_classification))
 
 # Apply to the test data 
-data <- applying_confusion_changes(data, confusion_likelihood, threshold = 0.3)
+test_data <- fread(file.path(base_path, "Data", species, "Original_predictions.csv")) %>%
+  as.data.frame() %>%
+  arrange(ID, Time) 
+data <- applying_confusion_changes(test_data, confusion_likelihood, threshold = 0.3)
 
 # Recalculate performance and save
-performance <- compute_metrics(data$smoothed_class, data$true_class)
+performance <- compute_metrics(as.factor(data$smoothed_class), as.factor(data$true_class))
 metrics <- performance$metrics
 fwrite(metrics, file.path(base_path, "Output", species, "ConfusionSmoothing_performance.csv"))
 generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, "ConfusionSmoothing_performance.pdf"))

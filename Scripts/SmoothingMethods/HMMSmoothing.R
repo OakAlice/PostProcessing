@@ -2,7 +2,7 @@
 # a simple ML HMM implementation to smooth the data
 
 # Extract parameters from the training data -------------------------------
-  train_data <- fread(file.path(base_path, "Data", "StandardisedPredictions", paste0(species, "_train_data.csv"))) %>%
+  train_data <- fread(file.path(base_path, "Data", species, "Training_predictions.csv")) %>%
     na.omit()
   
   # small bit of data for play
@@ -51,11 +51,11 @@
   )
   
 # NOTE: Is this a totally invalid thing to do?
-  # I predicted onto my own training data... that can't be how its meant to be done
-  # see more notes in obsidian workbook
+  # I predicted onto my own training data... that can't be how its meant to be done?
+  # I don't have enough data to do it on a clean set though...
   
 # Apply this to the test predictions ---------------------------------
-test_data <- fread(file.path(base_path, "Data", "StandardisedPredictions", paste0(species, "_test_data.csv"))) %>%
+test_data <- fread(file.path(base_path, "Data", species, "Original_predictions.csv")) %>%
   as.data.frame() %>%
   arrange(ID, Time) 
 
@@ -63,11 +63,10 @@ test_data <- fread(file.path(base_path, "Data", "StandardisedPredictions", paste
 test_data$smoothed_class <- viterbi(hmm_model, test_data$predicted_class)
 
 # Recalculate performance and save ----------------------------------------
-performance <- compute_metrics(test_data$smoothed_class, test_data$true_class)
+performance <- compute_metrics(as.factor(test_data$smoothed_class), as.factor(test_data$true_class))
 metrics <- performance$metrics
 fwrite(metrics, file.path(base_path, "Output", species, "HMMSmoothing_performance.csv"))
 generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, "HMMSmoothing_performance.pdf"))
-
 
 # Calculate ecological results --------------------------------------------
 if (file.exists(file.path(base_path, "Data", species, "Unlabelled_predictions.csv"))){

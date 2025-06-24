@@ -3,10 +3,17 @@
 
 # Functions ---------------------------------------------------------------
 find_breaks <- function(data, x){
+  
+  ## TODO: Going to have to add a new method for every dataset because they aren't all full datetimes
+  if(is.numeric(data$Time) & data$Time[1] > 719529){
+    data <- data %>% mutate(DateTime = as.POSIXct((Time - 719529) * 86400, origin = "1970-01-01", tz = "UTC"))
+  } else {
+    data$DateTime <- as.POSIXct(data$Time, format = "%Y-%m-%d %H:%M:%OS")
+  }
+  
   data <- data %>%
     arrange(ID, Time) %>%
-    mutate(DateTime = as.POSIXct((Time - 719529) * 86400, origin = "1970-01-01", tz = "UTC"),
-           time_diff = difftime(DateTime, data.table::shift(DateTime)), # had to define package or errored btw
+    mutate(time_diff = difftime(DateTime, data.table::shift(DateTime)), # had to define package or errored btw
            break_point = ifelse(time_diff > x, 1, 0),
            break_point = replace_na(break_point, 0),
            sequence = cumsum(break_point))
@@ -53,7 +60,8 @@ update_suspect_transitions <- function(data){
 }
 
 # Code --------------------------------------------------------------------
-train_data <- fread(file.path(base_path, "Data", "StandardisedPredictions", paste0(species, "_raw_train_standardised.csv")))
+train_data <- fread(file.path(base_path, "Data", species, "Feature_data.csv")) %>%
+  rename(true_class = Activity)
 x <- 10 # this is the number of seconds between samples that's counted as a "break"
 
 ## Check the data ---------------------------------------------------------
@@ -70,7 +78,7 @@ summary <- train_data %>%
 
 # make a distribution frequency plot to geez it (just curiosity)
 ggplot(summary, aes(x = sequence_length, fill = sequence_behaviours)) +
-   geom_bar(width = 5)
+   geom_bar(width = 100)
 
 # depending on your dataset there may or may not be a lot of transition sequences to lean from
 # you may have to adjust the x value and play around
@@ -79,7 +87,8 @@ ggplot(summary, aes(x = sequence_length, fill = sequence_behaviours)) +
 ## Create Transition Matrix ------------------------------------------------
 # based on this information, build a likelihood transition between behaviours
 # this will be very basic just: given a transition, how probable was that transition?
-train_data <- fread(file.path(base_path, "Data", "StandardisedPredictions", paste0(species, "_train_data.csv")))
+train_data <- fread(file.path(base_path, "Data", species, "Feature_data.csv")) %>%
+  rename(true_class = Activity)
 
 states <- levels(as.factor(train_data$true_class))
 n_states <- length(states)
@@ -99,6 +108,7 @@ for (i in seq_len(nrow(transitions))) {
   to <- as.character(transitions$next_state[i])
   transition_counts[from, to] <- transition_counts[from, to] + 1
 }
+
 transition_probs <- prop.table(transition_counts, 1)
 transition_probs <- as.data.frame(transition_probs)
 transition_probs$First <- rownames(transition_probs)
@@ -117,11 +127,10 @@ test_data <- find_suspect_transitions(test_data, transition_probs_melted, x = 10
 test_data <- update_suspect_transitions(test_data)
 
 ## Recalculate performance and save ----------------------------------------
-performance <- compute_metrics(test_data$smoothed_class, test_data$true_class)
+performance <- compute_metrics(as.factor(test_data$smoothed_class), as.factor(test_data$true_class))
 metrics <- performance$metrics
 fwrite(metrics, file.path(base_path, "Output", species, "TransitionSmoothing_performance.csv"))
 generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, "TransitionSmoothing_performance.pdf"))
-
 
 # Calculate ecological results --------------------------------------------
 if (file.exists(file.path(base_path, "Data", species, "Unlabelled_predictions.csv"))){

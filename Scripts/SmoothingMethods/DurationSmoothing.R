@@ -52,7 +52,8 @@ smooth_durations <- function(data, train_summary){
 
 # Code --------------------------------------------------------------------
 ## Load in the training data
-train_data <- fread(file.path(base_path, "Data", "StandardisedPredictions", paste0(species, "_raw_train_standardised.csv")))
+train_data <- fread(file.path(base_path, "Data", species, "Feature_data.csv")) %>%
+  rename(true_class = Activity)
 
 ## Identify sequences of continuous behaviour
 train_data <- identify_sequences(train_data, "true_class")
@@ -67,14 +68,14 @@ train_lengths <- train_data[, .(
 train_summary <- train_lengths[length > 1, .(p95 = quantile(length, 0.05)), by = behaviour]
 
 ## Use this to logic-gate the smoothing 
-test_data <- fread(file.path(base_path, "Data", "StandardisedPredictions", paste0(species, "_test_data.csv")))
+test_data <- fread(file.path(base_path, "Data", species, "Original_predictions.csv"))
 test_data <- identify_sequences(test_data, "predicted_class")
 
 ## Check whether each instance is likely legit based on its duration
 test_data <- smooth_durations(test_data, train_summary)
 
 # Recalculate performance and save
-performance <- compute_metrics(test_data$smoothed_class, test_data$true_class)
+performance <- compute_metrics(as.factor(test_data$smoothed_class), as.factor(test_data$true_class))
 metrics <- performance$metrics
 fwrite(metrics, file.path(base_path, "Output", species, "DurationSmoothing_performance.csv"))
 generate_confusion_plot(performance$conf_matrix_padded,
@@ -103,3 +104,4 @@ if (file.exists(file.path(base_path, "Data", species, "Unlabelled_predictions.cs
 } else {
   print("there is no ecological data for this dataset")
 }
+ 

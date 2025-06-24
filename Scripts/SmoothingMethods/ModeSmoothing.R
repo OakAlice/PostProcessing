@@ -38,7 +38,7 @@ generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(bas
 # Calculate ecological results --------------------------------------------
 if (file.exists(file.path(base_path, "Data", species, "Unlabelled_predictions.csv"))){
     
-  ecological_data <- fread(file.path(base_path, "Data", species, "Unlabelled_predictions.csv")))
+  ecological_data <- fread(file.path(base_path, "Data", species, "Unlabelled_predictions.csv"))
   
   # apply the smoothing
   ecological_data$smoothed_class <- rolling_mode_smooth(ecological_data$predicted_class, x = x)

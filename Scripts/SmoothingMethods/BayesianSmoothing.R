@@ -39,7 +39,7 @@ apply_bayes_smoothing <- function(data, states){
 
 # Code --------------------------------------------------------------------
 ## Get the transition matrix from the training data -----------------------
-train_data <- fread(file.path(base_path, "Data", "StandardisedPredictions", paste0(species, "_train_data.csv"))) %>%
+train_data <- fread(file.path(base_path, "Data", species, "Training_predictions.csv")) %>%
   na.omit()
 
 states <- levels(as.factor(train_data$true_class))
@@ -63,14 +63,14 @@ for (i in seq_len(nrow(transitions))) {
 transition_matrix <- prop.table(transition_counts, 1)
 
 ## Look at the test data probilities --------------------------------------
-test_data <- fread(file.path(base_path, "Data", "StandardisedPredictions", paste0(species, "_test_data.csv"))) %>%
+test_data <- fread(file.path(base_path, "Data", species, "Original_predictions.csv")) %>%
   as.data.frame() %>%
   arrange(ID, Time) 
 
 test_data <- apply_bayes_smoothing(test_data, states)
 
 ## Recalculate performance and save ----------------------------------------
-performance <- compute_metrics(test_data$smoothed_class, test_data$true_class)
+performance <- compute_metrics(as.factor(test_data$smoothed_class), as.factor(test_data$true_class))
 metrics <- performance$metrics
 fwrite(metrics, file.path(base_path, "Output", species, "BayesianSmoothing_performance.csv"))
 generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, "BayesianSmoothing_performance.pdf"))

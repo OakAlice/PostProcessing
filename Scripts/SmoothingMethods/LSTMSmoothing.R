@@ -106,9 +106,10 @@ apply_lstm <- function(val_data, net, window_size, class_levels){
 }
 
 # Code --------------------------------------------------------------------
-## Split data into training and val ---------------------------------------
-other_data <- fread(file.path(base_path, "Data", "StandardisedPredictions", paste0(species, "_train_data.csv"))) %>%
-  na.omit() %>%
+# in this case we are going to learn from the training data... 
+# to do this, we have to predict the model back onto the training data. 
+# which is problematic in so many ways... but here we go
+other_data <- fread(file.path(base_path, "Data", species, "Training_predictions.csv")) %>%
   group_by(ID, true_class) %>%
   arrange(Time) %>%
   mutate(row = row_number()) %>%
@@ -141,9 +142,9 @@ for (i in 1:nrow(parameters)){
                               class_levels)
   
   # Recalculate performance and save
-  performance <- compute_metrics(smoothed_data$smoothed_class, smoothed_data$true_class)
+  performance <- compute_metrics(as.factor(smoothed_data$smoothed_class), as.factor(smoothed_data$true_class))
     
-  F1 <- performance$metrics$F1[metrics$Activity == "Macro-Average"]
+  F1 <- performance$metrics$F1[performance$metrics$Behaviour == "Macro-Average"]
   result <- cbind(row, F1)
   results[[i]] <- result
   
@@ -158,10 +159,10 @@ best_index <- which.max(results$F1)
 best_parameters <- results[best_index, ]
 
 ## The final build --------------------------------------------------------
-train_data <- fread(file.path(base_path, "Data", "StandardisedPredictions", paste0(species, "_train_data.csv"))) %>%
+train_data <- fread(file.path(base_path, "Data", species, "Training_predictions.csv")) %>%
   na.omit() %>%
   arrange(ID, Time)
-test_data <- fread(file.path(base_path, "Data", "StandardisedPredictions", paste0(species, "_test_data.csv"))) %>%
+test_data <- fread(file.path(base_path, "Data", species, "Original_predictions.csv")) %>%
   na.omit() %>%
   arrange(ID, Time)
 
@@ -177,7 +178,7 @@ smoothed_data <- apply_lstm(test_data,
                             class_levels)
 
 ## Recalculate performance and save ---------------------------------------
-performance <- compute_metrics(smoothed_data$smoothed_class, smoothed_data$true_class)
+performance <- compute_metrics(as.factor(smoothed_data$smoothed_class), as.factor(smoothed_data$true_class))
 metrics <- performance$metrics
 
 fwrite(metrics, file.path(base_path, "Output", species, "LSTMSmoothing_performance.csv"))
