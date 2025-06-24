@@ -29,7 +29,7 @@ metrics <- lapply(metrics_list, function(file) {
 # remove Class: from the Activity and .csv from the smoothing_type
 metrics <- bind_rows(metrics) %>%
   mutate(
-    Activity = gsub("Class: ", "", Activity),
+    Activity = gsub("Class: ", "", Behaviour),
     smoothing_type = gsub("_performance.csv", "", smoothing_type)
   ) %>%
   select(!Prevelance) %>%
@@ -94,34 +94,36 @@ paste0("The optimal post-processing method, as defined by the greatest F1 score,
 ```
 Step 4 is to look at how some of the ecological interpretations change when we use the different smoothing methods. Assess the results of question 1 and question 2. 
 ```{r ecological, fig.height=3}
+  q1_answer_files <- list.files(path = file.path(base_path, "Output", species), pattern = "_eco1\\.csv$", full.names = TRUE)
+if(file.exists(q1_answer_files[1])){ # load in the ecological interpretations
 
-# load in the ecological interpretations
-q1_answer_files <- list.files(path = file.path(base_path, "Output", species), pattern = "_eco1\\.csv$", full.names = TRUE)
-q1_answers <- lapply(q1_answer_files, read.csv) %>% bind_rows()
-q1_answers$smoothing_style <- factor(q1_answers$smoothing_style, levels = c("None", "Mode", "Duration", "Confusion", "Transition", "Bayesian", "HMM", "LSTM"))
-
-fwrite(q1_answers, file.path(base_path, "Output", species, "eco1_answers.csv"))
-
-# make a plot showing this
-ggplot(q1_answers) +
-  geom_point(aes(x = smoothing_style, y = mean_frequency), colour = "goldenrod") +
-  geom_errorbar(aes(x = smoothing_style, 
-                    ymin = mean_frequency - sd_frequency, 
-                    ymax = mean_frequency + sd_frequency),
-                width = 0.2, colour = "goldenrod") +
-  my_theme() +
-  labs(x = "Smoothing Type", y = "Average Frequency")
-
-# and for duration
-ggplot(q1_answers) +
-  geom_point(aes(x = smoothing_style, y = mean_duration), colour = "goldenrod") +
-  geom_errorbar(aes(x = smoothing_style, 
-                    ymin = mean_duration - sd_duration, 
-                    ymax = mean_duration + sd_duration),
-                width = 0.2, colour = "goldenrod") +
-  my_theme() +
-  labs(x = "Smoothing Type", y = "Average duration")
-
+  q1_answers <- lapply(q1_answer_files, read.csv) %>% bind_rows()
+  q1_answers$smoothing_style <- factor(q1_answers$smoothing_style, levels = c("None", "Mode", "Duration", "Confusion", "Transition", "Bayesian", "HMM", "LSTM"))
+  
+  fwrite(q1_answers, file.path(base_path, "Output", species, "eco1_answers.csv"))
+  
+  # make a plot showing this
+  ggplot(q1_answers) +
+    geom_point(aes(x = smoothing_style, y = mean_frequency), colour = "goldenrod") +
+    geom_errorbar(aes(x = smoothing_style, 
+                      ymin = mean_frequency - sd_frequency, 
+                      ymax = mean_frequency + sd_frequency),
+                  width = 0.2, colour = "goldenrod") +
+    my_theme() +
+    labs(x = "Smoothing Type", y = "Average Frequency")
+  
+  # and for duration
+  ggplot(q1_answers) +
+    geom_point(aes(x = smoothing_style, y = mean_duration), colour = "goldenrod") +
+    geom_errorbar(aes(x = smoothing_style, 
+                      ymin = mean_duration - sd_duration, 
+                      ymax = mean_duration + sd_duration),
+                  width = 0.2, colour = "goldenrod") +
+    my_theme() +
+    labs(x = "Smoothing Type", y = "Average duration")
+} else {
+  print("there is no ecological data for this dataset")
+}
 ```
 
 
