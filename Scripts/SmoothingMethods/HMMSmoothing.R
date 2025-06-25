@@ -60,7 +60,7 @@ test_data <- fread(file.path(base_path, "Data", species, "Original_predictions.c
   arrange(ID, Time) 
 
 # Convert index back to class labels
-test_data$smoothed_class <- viterbi(hmm_model, test_data$predicted_class)
+test_data$smoothed_class <- viterbi(hmm_model, as.factor(test_data$predicted_class))
 
 # Recalculate performance and save ----------------------------------------
 performance <- compute_metrics(as.factor(test_data$smoothed_class), as.factor(test_data$true_class))

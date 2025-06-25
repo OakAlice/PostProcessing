@@ -41,12 +41,12 @@ applying_confusion_changes <- function(data, confusion_likelihood, threshold = 0
   setDT(conf_dt)
   setkey(conf_dt, predicted_class)
 
-  lookup_pairs <- data.frame(true_class = before, predicted_class = event)
+  lookup_pairs <- data.frame(true_class = as.factor(before), predicted_class = as.factor(event))
   conf_df <- as.data.frame(conf_dt)
   result <- left_join(lookup_pairs, conf_df, by = c("true_class", "predicted_class"))
   prob_before <- result$likelihood_classification
   
-  lookup_pairs2 <- data.frame(true_class = after, predicted_class = event)
+  lookup_pairs2 <- data.frame(true_class = as.factor(after), predicted_class = as.factor(event))
   result <- left_join(lookup_pairs2, conf_df, by = c("true_class", "predicted_class"))
   prob_after <- result$likelihood_classification
   
@@ -100,7 +100,7 @@ confusion_likelihood <- as.data.frame(as.table(confusion)) %>%
 test_data <- fread(file.path(base_path, "Data", species, "Original_predictions.csv")) %>%
   as.data.frame() %>%
   arrange(ID, Time) 
-data <- applying_confusion_changes(test_data, confusion_likelihood, threshold = 0.3)
+data <- applying_confusion_changes(data = test_data, confusion_likelihood, threshold = 0.3)
 
 # Recalculate performance and save
 performance <- compute_metrics(as.factor(data$smoothed_class), as.factor(data$true_class))

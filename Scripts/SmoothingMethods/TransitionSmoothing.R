@@ -29,7 +29,9 @@ find_suspect_transitions <- function(data, transition_probs_melted, x = 10, thre
       previous_class = data.table::shift(predicted_class, type = "lag"),
       change_point = ifelse(previous_class != predicted_class, 1, 0),
       change_point = replace_na(change_point, 0)
-    )
+    ) %>%
+    mutate(predicted_class = as.factor(predicted_class),
+           previous_class = as.factor(previous_class))
   
   prob_data <- data %>%
     left_join(transition_probs_melted, 
@@ -62,7 +64,12 @@ update_suspect_transitions <- function(data){
 # Code --------------------------------------------------------------------
 train_data <- fread(file.path(base_path, "Data", species, "Feature_data.csv")) %>%
   rename(true_class = Activity)
-x <- 10 # this is the number of seconds between samples that's counted as a "break"
+
+if (species == "Vehkaoja_Dog"){
+  x <- 180 # this one is different time stamps
+} else {
+  x <- 10 # this is the number of seconds between samples that's counted as a "break"
+}
 
 ## Check the data ---------------------------------------------------------
 # before we use this method, we need to establish how "realistic" our data is

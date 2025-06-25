@@ -1,12 +1,9 @@
 # Vehkaoja_Dog ------------------------------------------------------------
 # there is no time in this data (nor in the original data)
 # therefore for "time" I've just grouped it into tests, presuming that everything in the test is continuous 
+sample_rate <- 100
 
 if(!file.exists(file.path(base_path, "Data", "Ladds_Seal", "Formatted_raw_data.csv"))){
-  
-  sample_rate <- 100
-  species <- "Vehkaoja_Dog"
-  available_axes <- c("X", "Y", "Z") # the names of the accel axes I'm using
   
   ## Basic formatting -------------------------------------------------------
   files <- list.files(file.path(base_path, "Data", species, "clip_data"), recursive = TRUE, full.names = TRUE)
@@ -35,7 +32,7 @@ if(!file.exists(file.path(base_path, "Data", "Ladds_Seal", "Formatted_raw_data.c
     data1 <- fread(file.path(base_path, "Data", species, "Formatted_raw_data.csv"))
     
     generated_features <- list()
-    for (id in c(65, 66, 67, 68, 70, 72, 73, 74)){ #unique(data1$ID)){
+    for (id in unique(data1$ID)){
       data <- data1 %>% 
         filter(ID == id) %>% 
         filter(!Activity == "") %>% 

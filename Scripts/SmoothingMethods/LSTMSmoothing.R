@@ -144,7 +144,8 @@ for (i in 1:nrow(parameters)){
   # Recalculate performance and save
   performance <- compute_metrics(as.factor(smoothed_data$smoothed_class), as.factor(smoothed_data$true_class))
     
-  F1 <- performance$metrics$F1[performance$metrics$Behaviour == "Macro-Average"]
+  F1 <- performance$metrics$F1[performance$metrics$Activity == "Macro-Average"] ## changing this between behaviour and activity
+  
   result <- cbind(row, F1)
   results[[i]] <- result
   

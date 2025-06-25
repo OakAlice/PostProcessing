@@ -29,7 +29,7 @@ metrics <- lapply(metrics_list, function(file) {
 # remove Class: from the Activity and .csv from the smoothing_type
 metrics <- bind_rows(metrics) %>%
   mutate(
-    Activity = gsub("Class: ", "", Behaviour),
+    Activity = gsub("Class: ", "", Activity), ## also change this between activity and behaviour
     smoothing_type = gsub("_performance.csv", "", smoothing_type)
   ) %>%
   select(!Prevelance) %>%
