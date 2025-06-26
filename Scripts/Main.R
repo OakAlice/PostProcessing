@@ -20,17 +20,19 @@ p_load(tidyverse,
        lubridate)
 
 # Define variables for this run -------------------------------------------
-species <- "Clemente_Echidna" # dataset name
-target_activity <- "Walking" # behaviour that the ecological analyses will be about
+species <- "Yu_Duck" # dataset name
+target_activity <- "Walk" # behaviour that the ecological analyses will be about
 
 # Format Data -------------------------------------------------------------
 # collecting the data from various sources and formatting it to standardised structure
 available_axes <- c("X", "Y", "Z") 
 
 source(file = file.path(base_path, "Scripts", "DataFormatting", "GenerateFeatures_Functions.R"))
-#for (species in c("Smit_Cat", "Studd_Squirrel", "Yu_Duck", "Pagano_Bear")){
-  source(file = file.path(base_path, "Scripts", "DataFormatting", paste0(species, "_Formatting.R")))
-#}
+source(file = file.path(base_path, "Scripts", "DataFormatting", paste0(species, "_Formatting.R")))
+
+# Sequential data report --------------------------------------------------
+# how natural is this data? # haven't turned this into a markdown yet
+source(file = file.path(base_path, "Scripts", "SequentialReport.R"))
 
 # Make the Model ----------------------------------------------------------
 # tune, train, and test a model and generate predictions on the test data
@@ -79,4 +81,11 @@ source(file = file.path(base_path, "Scripts", "SmoothingMethods", "LSTMSmoothing
 # Comparing Smoothing Performances ----------------------------------------
 # this will pull out all the metrics tests and build a report for rapid comparison
 # will also compare the ecological results from each of them
-source(file = file.path(base_path, "Scripts", "ComparingSmoothing.R"))
+for (species in c("Yu_Duck", "Studd_Squirrel", "Sparkes_Koala", "Dunford_Cat", "Vehkaoja_DOg")){
+  print(species)
+  source(file = file.path(base_path, "Scripts", "ComparingSmoothing.R"))
+}
+
+# Comparing the comparisons -----------------------------------------------
+source(file = file.path(base_path, "Scripts", "ComparingComparions.R"))
+

@@ -1,0 +1,57 @@
+---
+title: "ComparingComparisonsReport"
+output: html_document
+date: "`r Sys.Date()`"
+params:
+  base_path: "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
+  species: "Sparkes_Koala"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.width = 8, fig.height = 6)
+```
+
+This is the report to compare the comparisons between the species datasets.
+
+Step 1 is to pull together all the data.
+```{r bind, include = FALSE}
+files <- list.files(file.path(base_path, "Output"), pattern = "all_smoothed_metrics.csv", full.names = TRUE, recursive = TRUE)
+
+data <- lapply(files, function(x){
+  data <- fread(x)
+  data$Species <- basename(dirname(x))
+  return(data)
+})
+
+data <- bind_rows(data)
+data <- data %>% filter(Activity == "Macro-Average")
+
+# add levels so its easier to plot later
+data$smoothing_type <- factor(data$smoothing_type, levels = c("NoSmoothing", "ModeSmoothing", "DurationSmoothing", "ConfusionSmoothing", "TransitionSmoothing", "HMMSmoothing", "BayesianSmoothing", "LSTMSmoothing"))
+
+data$Species <- factor(data$Species, levels = c(unique(data$Species)))
+
+```
+```{r}
+# display this
+print(head(data %>% filter(Metric == "F1")))
+```
+
+Step 2 is to compare these results. 
+```{r compare}
+# its hard to make any one single judgement, so I can make a plot for now
+
+# Plot
+df <- data %>% filter(Activity == "Macro-Average", Metric == "F1")
+ggplot(df, aes(x = Species, y = Score, fill = smoothing_type)) +
+  geom_point(stat = "identity", size = 3, shape = 21, colour = "white") +
+  # facet_wrap(~ Species, scales = "free_y", ncol = 2) +
+  my_theme() +
+  scale_fill_manual(values = my_colours) +
+  labs(x = "Activity", y = "Score", fill = "Smoothing Type") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+Step 3 is to make a statement about which of the methods I think is better... I'll try this later...
+

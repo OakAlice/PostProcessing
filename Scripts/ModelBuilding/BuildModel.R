@@ -132,5 +132,8 @@ predicted_class <- colnames(predictions)[max.col(predictions, ties.method = "fir
 predictions_df <- cbind(training_metadata, predictions, predicted_class)
 predictions_df <- predictions_df %>% rename(true_class = Activity)
 
+metrics <- compute_metrics(predicted_classes = as.factor(predictions_df$predicted_class), 
+                           ground_truth_labels = as.factor(predictions_df$true_class))
+
 # Write to CSV
 write.csv(predictions_df, file = file.path(base_path, "Data", species, paste0("Training_predictions.csv")), row.names = FALSE)

@@ -5,7 +5,7 @@
 removeBadFeatures <- function(feature_data, var_threshold, corr_threshold) {
   
   # Step 1: Calculate variance for numeric columns
-  numeric_columns <- feature_data[, .SD, .SDcols = !names(feature_data) %in% c("Activity", "ID")]
+  numeric_columns <- feature_data[, .SD, .SDcols = !names(feature_data) %in% c("Activity", "ID", "Time")]
   variances <- numeric_columns[, lapply(.SD, var, na.rm = TRUE)]
   selected_columns <- names(variances)[!is.na(variances) & variances > var_threshold]
   

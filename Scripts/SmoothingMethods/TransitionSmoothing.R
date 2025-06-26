@@ -71,26 +71,6 @@ if (species == "Vehkaoja_Dog"){
   x <- 10 # this is the number of seconds between samples that's counted as a "break"
 }
 
-## Check the data ---------------------------------------------------------
-# before we use this method, we need to establish how "realistic" our data is
-# as in, has it been collected in natural sequence from which we can derive natural sequence probabilities?
-# to do this, look at how much of the data is continuous per individual
-
-train_data <- find_breaks(train_data, x = x)
-
-summary <- train_data %>%
-  group_by(ID, sequence) %>%
-  summarise(sequence_length = length(sequence),
-            sequence_behaviours = as.factor(length(unique(true_class))))
-
-# make a distribution frequency plot to geez it (just curiosity)
-ggplot(summary, aes(x = sequence_length, fill = sequence_behaviours)) +
-   geom_bar(width = 100)
-
-# depending on your dataset there may or may not be a lot of transition sequences to lean from
-# you may have to adjust the x value and play around
-# just have to use ecological knowledge here...
-
 ## Create Transition Matrix ------------------------------------------------
 # based on this information, build a likelihood transition between behaviours
 # this will be very basic just: given a transition, how probable was that transition?

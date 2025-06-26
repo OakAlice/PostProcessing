@@ -53,6 +53,8 @@ metrics_long <- metrics %>%
                names_to = "Metric", 
                values_to = "Score")
 
+fwrite(metrics_long, file.path(base_path, "Output", species, "all_smoothed_metrics.csv"))
+
 # Plot
 ggplot(metrics_long, aes(x = Activity, y = Score, fill = smoothing_type)) +
   geom_point(stat = "identity", size = 3, shape = 21, colour = "white") +
