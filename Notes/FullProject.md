@@ -25,11 +25,20 @@
 | Sparkes_Koala    | x   | x         | x       |       |           |
 | Vehkaoja_Dog     | x   | x         | x       | x     | x         |
 | Ladds_Seal       | x   | x         | x       | x     | x         |
-| Smit_Cat         | x   | x         |         |       |           |
-| Studd_Squirrel   | x   | x         |         |       |           |
-| Clemente_Echidna |     |           |         |       |           |
-| Pagano_Bear      | x   | x         |         |       |           |
+| Smit_Cat         | x   | x         | x       |       |           |
+| Studd_Squirrel   | x   | x         | x       |       |           |
+| Clemente_Echidna | x   | x         | in prog |       |           |
+| Pagano_Bear      | x   | x         | x       |       |           |
 | Jeantet_Turtle   | x   |           |         |       |           |
 | Minasandra_Hyena | x   |           |         |       |           |
-| Yu_Duck          | x   | x         |         |       |           |
+| Yu_Duck          | x   | x         | in prog |       |           |
 | Makaewa_Gull     | x   |           |         |       |           |
+- 26/06: I'm one file away from extracting the echidna data (forgot that it was running and closed laptop oops) and have nearly completed the feature generation for the datasets I extracted yesterday. Today I will:
+	- [x] Finish extracting echidna data
+	- [ ] Train model for Cat
+	- [ ] Train model for Squirrel
+	- [ ] Train model for Bear
+	- [x] Email Dr Hui Yu re: collaboration (meeting next week?)
+	- Another thought I had is that I don't necessarily have to make "good" models that can transfer between individuals. In the cases where the training data and the deployment data is drawn from the same individuals, I can just make chron models... which would make them look a lot better... but then... no point really I think. ==Nah. Just fix the behs.==
+	- **THOUGHT!!** When my test data is as cooked as the training data (i.e., neither of them are natural) there's almost nothing that can be done to improve them as a sequence because their sequence is fundamentally not oriented in reality... eek. Bad news.
+		- Therefore, to actually test whether this is working, I need a dataset with extensive naturally annotated data... I don't like the fact that I'm thinking I'll have to use the cat data.

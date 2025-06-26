@@ -20,7 +20,7 @@ p_load(tidyverse,
        lubridate)
 
 # Define variables for this run -------------------------------------------
-species <- "Vehkaoja_Dog" # dataset name
+species <- "Clemente_Echidna" # dataset name
 target_activity <- "Walking" # behaviour that the ecological analyses will be about
 
 # Format Data -------------------------------------------------------------
@@ -28,9 +28,9 @@ target_activity <- "Walking" # behaviour that the ecological analyses will be ab
 available_axes <- c("X", "Y", "Z") 
 
 source(file = file.path(base_path, "Scripts", "DataFormatting", "GenerateFeatures_Functions.R"))
-for (species in c("Smit_Cat", "Studd_Squirrel", "Yu_Duck", "Pagano_Bear")){
+#for (species in c("Smit_Cat", "Studd_Squirrel", "Yu_Duck", "Pagano_Bear")){
   source(file = file.path(base_path, "Scripts", "DataFormatting", paste0(species, "_Formatting.R")))
-}
+#}
 
 # Make the Model ----------------------------------------------------------
 # tune, train, and test a model and generate predictions on the test data
