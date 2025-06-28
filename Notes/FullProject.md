@@ -44,11 +44,11 @@
 - 27/06: After doing 3MT today, I'm back on the grind. Will just have to keep grinding through datasets until I collect enough that show a performance gain? I have decreased my standards for dataset inclusion in hopes that a broader range of species will pop something out. Also need a single (or few) metric(s) that I can use to measure the sequential-ness of the labelled data.
 * 29/06: **What I really need to think about is how I'm going to statistically analyse my results** to determine whether there is a significant performance improvement or not... e.g., because I'm not cross-validating within my datasets, I'm not getting error-bars... going to think about whether I really do actually have to hold-out on myself like that...
 	* Chris and Dave thought it was overkill if I leave it out due to over-fitting/information leakage issues but... If I use the predictions on the training data, they will be unnaturally good compared to usual performance on deployment data therefore I won't see performance gains as a result of post-processing anyway.
-	*  ==Bayesian smoothing is thus far emerging as the clear leader lmao== so will need to make sure I do more research on this method... maybe find some variants of it and test variants... or play with params more.
-		* Could also look into the Kalmann filter?
-	* 
+	* Based on the results so far (image below) ==Bayesian smoothing is thus far emerging as the clear leader lmao== but the confusion matrix method doesn't look to be having any effect... and when it does, a negative effect. I still believe in the potential of this method... so will have to revisit that to refine the logic of it.
 
-
+![[Pasted image 20250629091716.png|600]]
+* Tried the kalman filter this morning but issue arose when model did not predict all possible classes, and then there will be none of that class in the transition matrix... so there isn't a way to fit it into the probability of the kalman filter... annoying... will deal with this on Monday.
+	* In the meantime, need to get back to the problem of determining which of the smoothers was optimal in a statistically significant way. And that will require the variable of naturalisticness... so need to work on that now.
 
 
 

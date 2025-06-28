@@ -10,7 +10,7 @@ if (1 == 1) { # change this to be some more helpful condition later lol
     
     # Knit the r markdown file as an HTML report (has the least errors/dependencies compared to other types of knits)
     rmarkdown::render(
-      input = file.path(base_path, "Scripts", "ComparingComparisonsReport.Rmd"),
+      input = file.path(base_path, "Scripts", "Comparisons", "ComparingComparisonsReport.Rmd"),
       output_format = "html_document",
       output_file = output_file,  # File name only
       output_dir = output_dir,   # Directory for saving the file

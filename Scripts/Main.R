@@ -20,7 +20,7 @@ p_load(tidyverse,
        lubridate)
 
 # Define variables for this run -------------------------------------------
-species <- "Ferdinandy_Dog" # dataset name
+species <- "Smit_Cat" # dataset name
 target_activity <- "Walk" # behaviour that the ecological analyses will be about
 
 # Format Data -------------------------------------------------------------
@@ -72,6 +72,11 @@ source(file = file.path(base_path, "Scripts", "SmoothingMethods", "HMMSmoothing.
 # Bayes rules to smooth transitions
 source(file = file.path(base_path, "Scripts", "SmoothingMethods", "BayesianSmoothing.R"))
 
+# Kalmann Filter Smoothing ------------------------------------------------
+#for (species in c("Yu_Duck", "Smit_Cat", "Vehkaoja_Dog", "Studd_Squirrel", "Ladds_Seal", "Dunford_Cat", "Maekawa_Gull")){
+source(file = file.path(base_path, "Scripts", "SmoothingMethods", "KalmannSmoothing.R"))
+#}
+
 # LSTM Smoothing ----------------------------------------------------------
 # Using a basic neural network to learn the natural sequences of behaviour
 source(file = file.path(base_path, "Scripts", "SmoothingMethods", "LSTMSmoothing.R"))
@@ -81,8 +86,8 @@ source(file = file.path(base_path, "Scripts", "SmoothingMethods", "LSTMSmoothing
 # Comparing Smoothing Performances ----------------------------------------
 # this will pull out all the metrics tests and build a report for rapid comparison
 # will also compare the ecological results from each of them
-source(file = file.path(base_path, "Scripts", "ComparingSmoothing.R"))
+source(file = file.path(base_path, "Scripts", "Comparisons", "ComparingSmoothing.R"))
 
 # Comparing the comparisons -----------------------------------------------
-source(file = file.path(base_path, "Scripts", "ComparingComparisons.R"))
+source(file = file.path(base_path, "Scripts", "Comparisons", "ComparingComparisons.R"))
 

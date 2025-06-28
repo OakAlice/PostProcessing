@@ -2,7 +2,7 @@
 # using the transition probilities and the prediction probibilities
 
 # Functions ---------------------------------------------------------------
-apply_bayes_smoothing <- function(data, states){
+apply_bayes_smoothing <- function(data, states, transition_matrix){
   
   setDT(data)
   
@@ -67,7 +67,7 @@ test_data <- fread(file.path(base_path, "Data", species, "Original_predictions.c
   as.data.frame() %>%
   arrange(ID, Time) 
 
-test_data <- apply_bayes_smoothing(test_data, states)
+test_data <- apply_bayes_smoothing(test_data, states, transition_matrix)
 
 ## Recalculate performance and save ----------------------------------------
 performance <- compute_metrics(as.factor(test_data$smoothed_class), as.factor(test_data$true_class))
@@ -78,7 +78,7 @@ generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(bas
 # Calculate ecological results --------------------------------------------
 if (file.exists(file.path(base_path, "Data", species, "Unlabelled_predictions.csv"))){
   ecological_data <- fread(file.path(base_path, "Data", species, "Unlabelled_predictions.csv"))
-  ecological_data <- apply_bayes_smoothing(data = ecological_data, states)
+  ecological_data <- apply_bayes_smoothing(data = ecological_data, states, transition_matrix)
 
   # calculate what this means
   eco <- ecological_analyses(smoothing_type = "Bayesian", 

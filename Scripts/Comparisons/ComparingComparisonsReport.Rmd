@@ -27,7 +27,7 @@ data <- bind_rows(data)
 data <- data %>% filter(Activity == "Macro-Average")
 
 # add levels so its easier to plot later
-data$smoothing_type <- factor(data$smoothing_type, levels = c("NoSmoothing", "ModeSmoothing", "DurationSmoothing", "ConfusionSmoothing", "TransitionSmoothing", "HMMSmoothing", "BayesianSmoothing", "LSTMSmoothing"))
+data$smoothing_type <- factor(data$smoothing_type, levels = c("NoSmoothing", "ModeSmoothing", "DurationSmoothing", "ConfusionSmoothing", "TransitionSmoothing", "HMMSmoothing", "BayesianSmoothing", "KalmanSmoothing", "LSTMSmoothing"))
 
 data$Species <- factor(data$Species, levels = c(unique(data$Species)))
 
