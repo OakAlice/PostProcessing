@@ -20,25 +20,34 @@
 		- The one thing I can't find is how to link the Minasandra observations with the raw data since the times are different in both files. I tried reading through his github (https://github.com/pminasandra/hyena-acc/tree/master) and even that left me with few clues. ==will return to this later==
 		- Instead, began feature processing for the other species
 
-| Dataset          | Raw | Formatted | Feature | Model | Smoothing |
-| ---------------- | --- | --------- | ------- | ----- | --------- |
-| Sparkes_Koala    | x   | x         | x       |       |           |
-| Vehkaoja_Dog     | x   | x         | x       | x     | x         |
-| Ladds_Seal       | x   | x         | x       | x     | x         |
-| Smit_Cat         | x   | x         | x       |       |           |
-| Studd_Squirrel   | x   | x         | x       | x     | x         |
-| Clemente_Echidna | x   | x         | in prog |       |           |
-| Pagano_Bear      | x   | x         | in prog |       |           |
-| Jeantet_Turtle   | x   |           |         |       |           |
-| Minasandra_Hyena | x   |           |         |       |           |
-| Yu_Duck          | x   | x         | x       | x     | x         |
-| Makaewa_Gull     | x   |           |         |       |           |
-| Dunford_Cat      | x   | x         | x       | x     | x         |
+| Dataset          | Raw | Formatted | Feature         | Model | Smoothing |
+| ---------------- | --- | --------- | --------------- | ----- | --------- |
+| Sparkes_Koala    | x   | x         | x               |       |           |
+| Vehkaoja_Dog     | x   | x         | x               | x     | x         |
+| Ladds_Seal       | x   | x         | x               | x     | x         |
+| Smit_Cat         | x   | x         | x               |       |           |
+| Studd_Squirrel   | x   | x         | x               | x     | x         |
+| Clemente_Echidna | x   | x         | in prog         |       |           |
+| Pagano_Bear      | x   | x         | in prog         |       |           |
+| Jeantet_Turtle   | x   |           |                 |       |           |
+| Minasandra_Hyena | x   |           |                 |       |           |
+| Yu_Duck          | x   | x         | x               | x     | x         |
+| Makaewa_Gull     | x   | x         | (6 individuals) |       |           |
+| Dunford_Cat      | x   | x         | x               | x     | x         |
 - 26/06: I'm one file away from extracting the echidna data (forgot that it was running and closed laptop oops) and have nearly completed the feature generation for the datasets I extracted yesterday. Today I will:
 	- [x] Finish extracting echidna data
 	- [x] Email Dr Hui Yu re: collaboration (meeting next week?)
 	- Another thought I had is that I don't necessarily have to make "good" models that can transfer between individuals. In the cases where the training data and the deployment data is drawn from the same individuals, I can just make chron models... which would make them look a lot better... but then... no point really I think. ==Nah. Just fix the behs.==
 	- **THOUGHT!!** When my test data is as cooked as the training data (i.e., neither of them are natural) there's almost nothing that can be done to improve them as a sequence because their sequence is fundamentally not oriented in reality... eek. Bad news.
 		- Therefore, to actually test whether this is working, I need a dataset with extensive naturally annotated data... I don't like the fact that I'm thinking I'll have to use my own cat data.
-- Train model for Smit_Cat
-	- [ ] Set up to train as many models as possible
+- 27/06: After doing 3MT today, I'm back on the grind. Will just have to keep grinding through datasets until I collect enough that show a performance gain? I have decreased my standards for dataset inclusion in hopes that a broader range of species will pop something out. Also need a single (or few) metric(s) that I can use to measure the sequential-ness of the labelled data.
+	- Bayesian smoothing is thus far emerging as the clear leader lmao
+
+* 29/06: What I really need to think about is how I'm going to statistically analyse my results to determine whether there is a significant performance improvement or not... e.g., because I'm not cross-validating within my datasets, I'm not getting error-bars... going to think about whether I really do actually have to hold-out on myself like that...
+	* Chris and Dave thought it was overkill if I leave it out due to over-fitting/information leakage issues but... If I use the predictions on the training data, they will be unnaturally good compared to usual performance on deployment data therefore I won't see performance gains as a result of post-processing anyway.
+
+
+
+
+
+- Paper will have 2 points. 1 will be that post-processing can provide performance gains / changes. 2 will be that we have been treating this data like discreet moments in time, not as sequences, and we need to go back to treating it like sequential data... maybe I could try filling out the introduction this week?

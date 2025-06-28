@@ -20,7 +20,7 @@ p_load(tidyverse,
        lubridate)
 
 # Define variables for this run -------------------------------------------
-species <- "Yu_Duck" # dataset name
+species <- "Ferdinandy_Dog" # dataset name
 target_activity <- "Walk" # behaviour that the ecological analyses will be about
 
 # Format Data -------------------------------------------------------------
@@ -81,10 +81,7 @@ source(file = file.path(base_path, "Scripts", "SmoothingMethods", "LSTMSmoothing
 # Comparing Smoothing Performances ----------------------------------------
 # this will pull out all the metrics tests and build a report for rapid comparison
 # will also compare the ecological results from each of them
-for (species in c("Yu_Duck", "Studd_Squirrel", "Sparkes_Koala", "Dunford_Cat", "Vehkaoja_DOg")){
-  print(species)
-  source(file = file.path(base_path, "Scripts", "ComparingSmoothing.R"))
-}
+source(file = file.path(base_path, "Scripts", "ComparingSmoothing.R"))
 
 # Comparing the comparisons -----------------------------------------------
 source(file = file.path(base_path, "Scripts", "ComparingComparions.R"))

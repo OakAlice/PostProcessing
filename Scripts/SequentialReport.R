@@ -39,4 +39,3 @@ ggplot(summary, aes(x = sequence_length, fill = sequence_behaviours)) +
 # depending on your dataset there may or may not be a lot of transition sequences to lean from
 # you may have to adjust the x value and play around
 # just have to use ecological knowledge here...
-

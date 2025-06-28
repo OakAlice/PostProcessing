@@ -24,7 +24,7 @@ RFModelOptimisation <- function(feature_data, data_split, number_trees, mtry, ma
     # remove bad features
     feature_data <- as.data.table(feature_data)
     
-    clean_cols <- removeBadFeatures(feature_data, var_threshold = 0.5, corr_threshold = 0.9)
+    clean_cols <- removeBadFeatures(feature_data, var_threshold = 0.3, corr_threshold = 0.9)
     clean_feature_data <- feature_data %>%
       select(c(!!!syms(clean_cols), "Activity", "ID", "Time")) %>% 
       na.omit()

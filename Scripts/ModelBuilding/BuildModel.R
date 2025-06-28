@@ -24,10 +24,11 @@ other_data <- data %>% filter(!ID %in% test_IDs)
   )
   
   other_data <- other_data %>% as.data.table() %>%
-    group_by(ID, Activity) #%>%
-    #slice(1:100) ## REMOVE THIS WHEN YOU're SERIOUES
+    group_by(ID, Activity) # %>%
+    # slice(1:100) ## REMOVE THIS WHEN YOU're SERIOUES
   
   # this is optimised for weighted F1 score
+  # note that for Ferdinandy_Dog need to go into function and change var_threshold to 0.01
   results <- BayesianOptimization(
     FUN = function(number_trees, mtry, max_depth) {
       RFModelOptimisation(
