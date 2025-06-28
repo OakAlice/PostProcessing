@@ -54,7 +54,7 @@ other_data <- data %>% filter(!ID %in% test_IDs)
   
 # Train an optimal model --------------------------------------------------
   other_feature_data <- as.data.table(other_data)
-  clean_cols <- removeBadFeatures(other_feature_data, var_threshold = 0.5, corr_threshold = 0.9)
+  clean_cols <- removeBadFeatures(other_feature_data, var_threshold = 0.3, corr_threshold = 0.9)
   training_data <- other_feature_data %>%
     select(c(!!!syms(clean_cols), "Activity")) %>%
     na.omit() %>%

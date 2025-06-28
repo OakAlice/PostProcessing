@@ -104,33 +104,16 @@ Okay, instead I am going to get to work on the ecological questions. Fortunately
 #### 10062025
 Have gone through and refactored and formatted the code so that each method looks roughly the same. This is mainly for neatness sake, but also so that its easier for me to update and change later as I will no-doubt change this code a lot as I go on. I also changed it so that the average frequency is given as average per day (6am-6am loop) with an sd. 
 
-
-
-
-
-
-
-It wasn't in my original pitch, but I'm going to consider a few more smoothing methods as well. Namely, the Kalmann filter and maybe the Holt-Winters method which incorporates longer-term trends (I could do time of day and seasonality as well). Need to do "ecologist informed" method where I use all my ecological knowledge to make the best smoother.
-
-
-
-
-
-
 ==Note, for the ecological question I should be using the deployment data not the test data?==
 
 
 
-
-
-
-
 **Tasks for next time:**
-- [ ] Visualisation of sequence order
+- [x] Visualisation of sequence order
 - [x] Basic ecological question to compare results of
 - [ ] Find a bunch of timeseries post-processing papers from other domains 
 - [ ] Create the best possible smoothing method that I can think of.
-- [ ] Write up draft report for Chris and Dave to read
+- [x] Write up draft report for Chris and Dave to read
 - [ ] get the ecological analysis possible for LSTM methods
 
 
@@ -141,22 +124,4 @@ It wasn't in my original pitch, but I'm going to consider a few more smoothing m
 
 
 
-
-
 Best possible method would be to have an ecologist define all the parameters and then combine all the different types of smoothing and then for anything thats flagged as suspicious, it visualises the data for you, and you can recode it.
-
-
-
-
-Hey Dave and Chris!
-
-Just got back from our kangaroo collar deployment and my ASSAB conference! Dave is at a conference this week, but if it still works for everyone - we could pencil a meeting for sometime early next week? :) 
-
-Before we meet, I've pulled together a draft report to explain my prelim results from the first dataset for my fourth chapter. I'm super excited about this, but - as I've now learnt - the trend between my optimism levels and my results being legitimate is far from positively linear ahah, and this will definitely need some critical review!
-
-Draft: [[PilotReport]]
-
-Thank you and hope you have a great time at the conference Dave.
-
-Regards,
-Oak

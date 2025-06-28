@@ -41,15 +41,28 @@ Step 2 is to compare these results.
 ```{r compare}
 # its hard to make any one single judgement, so I can make a plot for now
 
-# Plot
+# Plot so that control is more obvious
 df <- data %>% filter(Activity == "Macro-Average", Metric == "F1")
 ggplot(df, aes(x = Species, y = Score, fill = smoothing_type)) +
-  geom_point(stat = "identity", size = 3, shape = 21, colour = "white") +
-  # facet_wrap(~ Species, scales = "free_y", ncol = 2) +
+  geom_point(
+    data = df[df$smoothing_type != "NoSmoothing", ],
+    aes(x = Species, y = Score, fill = smoothing_type),
+    shape = 21,
+    colour = "white",
+    size = 3
+  ) +
+  geom_point(
+    data = df[df$smoothing_type == "NoSmoothing", ],
+    aes(x = Species, y = Score),
+    shape = 8,
+    colour = "black",
+    size = 3
+  ) +
   my_theme() +
   scale_fill_manual(values = my_colours) +
   labs(x = "Activity", y = "Score", fill = "Smoothing Type") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
 
 ```
 

@@ -84,5 +84,5 @@ source(file = file.path(base_path, "Scripts", "SmoothingMethods", "LSTMSmoothing
 source(file = file.path(base_path, "Scripts", "ComparingSmoothing.R"))
 
 # Comparing the comparisons -----------------------------------------------
-source(file = file.path(base_path, "Scripts", "ComparingComparions.R"))
+source(file = file.path(base_path, "Scripts", "ComparingComparisons.R"))
 

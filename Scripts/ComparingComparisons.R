@@ -5,8 +5,8 @@ source(file.path(base_path, "Scripts", "PlottingFunctions.R"))
 if (1 == 1) { # change this to be some more helpful condition later lol
   tryCatch({
     # Define the output directory and file
-    output_dir <- file.path(base_path, "Output", species)
-    output_file <- paste0(species, "_compare_comparisons.html")
+    output_dir <- file.path(base_path, "Output")
+    output_file <- paste0("Compare_comparisons.html")
     
     # Knit the r markdown file as an HTML report (has the least errors/dependencies compared to other types of knits)
     rmarkdown::render(
