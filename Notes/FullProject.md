@@ -22,10 +22,10 @@
 
 | Dataset          | Raw | Formatted | Feature         | Model | Smoothing |
 | ---------------- | --- | --------- | --------------- | ----- | --------- |
-| Sparkes_Koala    | x   | x         | x               |       |           |
+| Sparkes_Koala    | x   | x         | x               | x     | x         |
 | Vehkaoja_Dog     | x   | x         | x               | x     | x         |
 | Ladds_Seal       | x   | x         | x               | x     | x         |
-| Smit_Cat         | x   | x         | x               |       |           |
+| Smit_Cat         | x   | x         | x               | x     | x         |
 | Studd_Squirrel   | x   | x         | x               | x     | x         |
 | Clemente_Echidna | x   | x         | in prog         |       |           |
 | Pagano_Bear      | x   | x         | in prog         |       |           |
@@ -34,7 +34,7 @@
 | Yu_Duck          | x   | x         | x               | x     | x         |
 | Makaewa_Gull     | x   | x         | (6 individuals) | x     | x         |
 | Dunford_Cat      | x   | x         | x               | x     | x         |
-| Ferdinandy_Dog   | x   | x         | x               |       |           |
+| Ferdinandy_Dog   | x   | x         | x               | x     | x         |
 - 26/06: I'm one file away from extracting the echidna data (forgot that it was running and closed laptop oops) and have nearly completed the feature generation for the datasets I extracted yesterday. Today I will:
 	- [x] Finish extracting echidna data
 	- [x] Email Dr Hui Yu re: collaboration (meeting next week?)
@@ -46,10 +46,28 @@
 	* Chris and Dave thought it was overkill if I leave it out due to over-fitting/information leakage issues but... If I use the predictions on the training data, they will be unnaturally good compared to usual performance on deployment data therefore I won't see performance gains as a result of post-processing anyway.
 	* Based on the results so far (image below) ==Bayesian smoothing is thus far emerging as the clear leader lmao== but the confusion matrix method doesn't look to be having any effect... and when it does, a negative effect. I still believe in the potential of this method... so will have to revisit that to refine the logic of it.
 
-![[Pasted image 20250629091716.png|600]]
+![[Pasted image 20250629091716.png|400]]
 * Tried the kalman filter this morning but issue arose when model did not predict all possible classes, and then there will be none of that class in the transition matrix... so there isn't a way to fit it into the probability of the kalman filter... annoying... will deal with this on Monday.
 	* In the meantime, need to get back to the problem of determining which of the smoothers was optimal in a statistically significant way. And that will require the variable of naturalisticness... so need to work on that now.
+	* The obvious ones are:
+		* Average number of transitions per sequence
+		* Average length of sequence
+		* Proportion of all sequences that have multiple behaviours
+		* Transitions / second as the transition rate (how quickly do animals flip between behaviours when they are recorded...)
+	* My variables are: 
+		* F1: Macro-average F1-score for each species and each smoothing type
+		* Transition_Rate: Transition/second within each continuous sequence
+		* Prop_Transitions: How many training sequences contained transitions
+	* Exploratory, I can begin by plotting these against each other? But to do that... I need to get the relative improvement / change from control.
+#### Trying out some basic stats on the results so far
+- If I look at the relative improvement from control across the datasets and just make a very simple lm I get that Bayesian smoothing is significantly better...
+![[Pasted image 20250629113733.png|400]]
+- Adding into that some of the sequence stats that I calculated earlier made Bayes more significant but none of the other variables themselves became significant... So... that means that I have a barely significant result... but it is something! Keep working on it! Yay!
+![[Pasted image 20250629114423.png|500]]
+
+
 
 
 
 - Paper will have 2 points. 1 will be that post-processing can provide performance gains / changes. 2 will be that we have been treating this data like discreet moments in time, not as sequences, and we need to go back to treating it like sequential data... maybe I could try filling out the introduction this week?
+- ==redo all of this but without the overlap between windows?==

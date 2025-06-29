@@ -15,8 +15,7 @@ if (1 == 1) { # change this to be some more helpful condition later lol
       output_file = output_file,  # File name only
       output_dir = output_dir,   # Directory for saving the file
       params = list( # these are the things I'm going to feed in to change report
-        base_path = base_path,
-        species = species
+        base_path = base_path
       )
     )
     

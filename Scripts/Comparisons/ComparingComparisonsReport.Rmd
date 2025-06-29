@@ -4,7 +4,6 @@ output: html_document
 date: "`r Sys.Date()`"
 params:
   base_path: "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
-  species: "Sparkes_Koala"
 ---
 
 ```{r setup, include=FALSE}
@@ -64,7 +63,58 @@ ggplot(df, aes(x = Species, y = Score, fill = smoothing_type)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 
+# and also do it as relative from the control
+setDT(df)
+
+# Get NoSmoothing scores by Species
+baseline <- df[smoothing_type == "NoSmoothing", .(Species, baseline = Score)]
+df <- merge(df, baseline, by = "Species", all.x = TRUE)
+# Calculate relative change from NoSmoothing
+df[, relative_change := (Score - baseline) / baseline]
+# now plot that
+ggplot(df, aes(x = Species, y = relative_change, fill = smoothing_type)) +
+  geom_point(
+    data = df[df$smoothing_type != "NoSmoothing", ],
+    aes(x = Species, y = relative_change, fill = smoothing_type),
+    shape = 21,
+    colour = "white",
+    size = 3
+  ) +
+  geom_point(
+    data = df[df$smoothing_type == "NoSmoothing", ],
+    aes(x = Species, y = relative_change),
+    shape = 8,
+    colour = "black",
+    size = 3
+  ) +
+  my_theme() +
+  scale_fill_manual(values = my_colours) +
+  labs(x = "Activity", y = "Relative change to F1 Score", fill = "Smoothing Type") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-Step 3 is to make a statement about which of the methods I think is better... I'll try this later...
+Step 3 is to correlate this with the sequential stats I was able to draw out in the sequence report on the training data.
 
+```{r extracting stat data}
+stat_files <- list.files(file.path(base_path, "Output"), pattern = "Sequence_stats.csv", full.names = TRUE, recursive = TRUE)
+
+stat_data <- lapply(stat_files, function(x){
+  data <- fread(x)
+  return(data)
+})
+
+stat_data <- bind_rows(stat_data)
+head(stat_data)
+```
+
+Of these stats, the ones I think will be most predictive are Prop_Transitions (which represents how many of the training sequences contained transitions) and Transition_Rate (which is how quickly the behaviours turnover within those sequences). Therefore:
+
+```{r some stats}
+# add the 2 information sources together
+full_df <- merge(df, stat_data, by = "Species")
+
+lm <- lm(relative_change ~ smoothing_type + Mean_Seq_Length + Transition_Rate + Prop_Transitions, data = full_df)
+summary(lm)
+
+
+```

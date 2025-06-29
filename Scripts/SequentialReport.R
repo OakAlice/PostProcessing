@@ -1,13 +1,11 @@
 # Sequential Report -------------------------------------------------------
 # how natural is this data, how many transitions are in it?
 
-# load in the data
-train_data <- fread(file.path(base_path, "Data", species, "Feature_data.csv"))
-
+# Functions ---------------------------------------------------------------
 # find the breaks
 find_breaks <- function(data, x){
   
-  ## TODO: Going to have to add a new method for every dataset because they aren't all full datetimes
+  ## TODO: Going to have to add a new method for every dataset because they aren't all full datetimes??
   if(is.numeric(data$Time) & data$Time[1] > 719529){
     data <- data %>% mutate(DateTime = as.POSIXct((Time - 719529) * 86400, origin = "1970-01-01", tz = "UTC"))
   } else {
@@ -24,18 +22,48 @@ find_breaks <- function(data, x){
   return(data)
 }
 
+# Code --------------------------------------------------------------------
+# load in the data
+train_data <- fread(file.path(base_path, "Data", species, "Feature_data.csv"))
 # find all the breaks in sequential reports
 train_data <- find_breaks(train_data, x = 5)
 
-summary <- train_data %>%
+# metric 1. mean transitions per sequence
+transitions <- train_data %>%
+  arrange(ID, sequence, Time) %>%
   group_by(ID, sequence) %>%
-  summarise(sequence_length = length(sequence),
-            sequence_behaviours = as.factor(length(unique(Activity))))
+  mutate(behaviour_change = Activity != lag(Activity)) %>%
+  summarise(
+    sequence_length = n(),
+    n_transitions = sum(behaviour_change, na.rm = TRUE)
+  )
 
-# make a distribution frequency plot to geez it (just curiosity)
-ggplot(summary, aes(x = sequence_length, fill = sequence_behaviours)) +
-  geom_bar(width = 5)
+mean_transitions_sequence <- mean(transitions$n_transitions)
+mean_sequence_length <- mean(transitions$sequence_length)
+median_transitions <- median(transitions$n_transitions)
+sd_transitions <- sd(transitions$n_transitions)
 
-# depending on your dataset there may or may not be a lot of transition sequences to lean from
-# you may have to adjust the x value and play around
-# just have to use ecological knowledge here...
+# and the rate at which they change
+transition_rate <- mean(transitions$n_transitions / transitions$sequence_length)
+
+# metric 2. proportion of sequences that are multi-behaviour
+multi_behavior <- train_data %>%
+  group_by(ID, sequence) %>%
+  summarise(n_behaviours = n_distinct(Activity)) %>%
+  mutate(is_multi = n_behaviours > 1)
+
+summary_stats <- multi_behavior %>%
+  summarise(prop_multi_sequence = mean(is_multi))
+
+# save these into the output file for later stats retrieval
+stats_df <- data.frame(
+  Species = species,
+  Mean_Transitions = as.numeric(mean_transitions_sequence),
+  Median_Transitions = as.numeric(median_transitions),
+  Sd_Transitions = as.numeric(sd_transitions),
+  Transition_Rate = as.numeric(transition_rate),
+  Prop_Transitions = mean(summary_stats$prop_multi_sequence),
+  Mean_Seq_Length = as.numeric(mean_sequence_length)
+)
+
+fwrite(stats_df, file.path(base_path, "Output", species, "Sequence_stats.csv"))

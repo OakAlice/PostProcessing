@@ -23,6 +23,8 @@ p_load(tidyverse,
 species <- "Smit_Cat" # dataset name
 target_activity <- "Walk" # behaviour that the ecological analyses will be about
 
+all_species <- c("Dunford_Cat", "Ferdinandy_Dog", "Ladds_Seal", "Maekawa_Gull", "Smit_Cat", "Sparkes_Koala", "Studd_Squirrel", "Vehkaoja_Dog", "Yu_Duck") 
+
 # Format Data -------------------------------------------------------------
 # collecting the data from various sources and formatting it to standardised structure
 available_axes <- c("X", "Y", "Z") 
@@ -73,8 +75,9 @@ source(file = file.path(base_path, "Scripts", "SmoothingMethods", "HMMSmoothing.
 source(file = file.path(base_path, "Scripts", "SmoothingMethods", "BayesianSmoothing.R"))
 
 # Kalmann Filter Smoothing ------------------------------------------------
+## TODO: Fix this
 #for (species in c("Yu_Duck", "Smit_Cat", "Vehkaoja_Dog", "Studd_Squirrel", "Ladds_Seal", "Dunford_Cat", "Maekawa_Gull")){
-source(file = file.path(base_path, "Scripts", "SmoothingMethods", "KalmannSmoothing.R"))
+# source(file = file.path(base_path, "Scripts", "SmoothingMethods", "KalmannSmoothing.R"))
 #}
 
 # LSTM Smoothing ----------------------------------------------------------
