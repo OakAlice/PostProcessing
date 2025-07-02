@@ -17,10 +17,17 @@ p_load(tidyverse,
        lubridate,
        rlang,
        tsfeatures,
-       lubridate)
+       lubridate,
+       effsize,
+       lme4,
+       lmerTest)
+
+# for parallel processing
+library(future)
+library(future.apply)
 
 # Define variables for this run -------------------------------------------
-species <- "Smit_Cat" # dataset name
+species <- "Hanscom_KangarooRat" # dataset name
 target_activity <- "Walk" # behaviour that the ecological analyses will be about
 
 all_species <- c("Dunford_Cat", "Ferdinandy_Dog", "Ladds_Seal", "Maekawa_Gull", "Smit_Cat", "Sparkes_Koala", "Studd_Squirrel", "Vehkaoja_Dog", "Yu_Duck") 

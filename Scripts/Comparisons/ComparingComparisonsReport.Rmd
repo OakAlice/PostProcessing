@@ -7,12 +7,12 @@ params:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, fig.width = 8, fig.height = 6)
+knitr::opts_chunk$set(echo = FALSE, fig.width = 8, fig.height = 5)
 ```
 
 This is the report to compare the comparisons between the species datasets.
 
-Step 1 is to pull together all the data.
+Step 1 is to pull together all the data. 
 ```{r bind, include = FALSE}
 files <- list.files(file.path(base_path, "Output"), pattern = "all_smoothed_metrics.csv", full.names = TRUE, recursive = TRUE)
 
@@ -32,8 +32,9 @@ data$Species <- factor(data$Species, levels = c(unique(data$Species)))
 
 ```
 ```{r}
-# display this
+# save this
 print(head(data %>% filter(Metric == "F1")))
+fwrite(data, file.path(base_path, "Output", "collated_performance.csv"))
 ```
 
 Step 2 is to compare these results. 
@@ -107,14 +108,31 @@ stat_data <- bind_rows(stat_data)
 head(stat_data)
 ```
 
-Of these stats, the ones I think will be most predictive are Prop_Transitions (which represents how many of the training sequences contained transitions) and Transition_Rate (which is how quickly the behaviours turnover within those sequences). Therefore:
+Of these stats, the ones I think will be most predictive are Prop_Transitions (which represents how many of the training sequences contained transitions) and Transition_Rate (which is how quickly the behaviours turnover within those sequences).
+
+Firstly I test whether there were interaction effects by doing an anova comparing the predictive performance of the model with and without the interactions.
 
 ```{r some stats}
 # add the 2 information sources together
 full_df <- merge(df, stat_data, by = "Species")
 
-lm <- lm(relative_change ~ smoothing_type + Mean_Seq_Length + Transition_Rate + Prop_Transitions, data = full_df)
-summary(lm)
+model_minimal <- lmer(relative_change ~ smoothing_type + Transition_Rate + Prop_Transitions + 
+                   (1|Species), data = full_df, REML = FALSE)
 
+model_med <- lmer(relative_change ~ smoothing_type + Transition_Rate + Prop_Transitions + 
+                   smoothing_type:Transition_Rate +
+                   smoothing_type:Prop_Transitions +
+                   Transition_Rate:Prop_Transitions +
+                   (1|Species), data = full_df, REML = FALSE)
 
+model_full <- lmer(relative_change ~ smoothing_type * Transition_Rate * Prop_Transitions + 
+                   (1|Species), data = full_df, REML = FALSE)
+
+anova(model_minimal, model_med, model_full)
+```
+
+Full model was significantly better, so I will use it.
+
+```{r}
+summary(model_full)
 ```

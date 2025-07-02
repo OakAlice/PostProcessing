@@ -20,21 +20,23 @@
 		- The one thing I can't find is how to link the Minasandra observations with the raw data since the times are different in both files. I tried reading through his github (https://github.com/pminasandra/hyena-acc/tree/master) and even that left me with few clues. ==will return to this later==
 		- Instead, began feature processing for the other species
 
-| Dataset          | Raw | Formatted | Feature         | Model | Smoothing |
-| ---------------- | --- | --------- | --------------- | ----- | --------- |
-| Sparkes_Koala    | x   | x         | x               | x     | x         |
-| Vehkaoja_Dog     | x   | x         | x               | x     | x         |
-| Ladds_Seal       | x   | x         | x               | x     | x         |
-| Smit_Cat         | x   | x         | x               | x     | x         |
-| Studd_Squirrel   | x   | x         | x               | x     | x         |
-| Clemente_Echidna | x   | x         | in prog         |       |           |
-| Pagano_Bear      | x   | x         | in prog         |       |           |
-| Jeantet_Turtle   | x   |           |                 |       |           |
-| Minasandra_Hyena | x   |           |                 |       |           |
-| Yu_Duck          | x   | x         | x               | x     | x         |
-| Makaewa_Gull     | x   | x         | (6 individuals) | x     | x         |
-| Dunford_Cat      | x   | x         | x               | x     | x         |
-| Ferdinandy_Dog   | x   | x         | x               | x     | x         |
+| Dataset               | Raw | Formatted | Feature         | Model | Smoothing |
+| --------------------- | --- | --------- | --------------- | ----- | --------- |
+| Sparkes_Koala         | x   | x         | x               | x     | x         |
+| Vehkaoja_Dog          | x   | x         | x               | x     | x         |
+| Ladds_Seal            | x   | x         | x               | x     | x         |
+| Smit_Cat              | x   | x         | x               | x     | x         |
+| Studd_Squirrel        | x   | x         | x               | x     | x         |
+| Clemente_Echidna      | x   | x         |                 |       |           |
+| Pagano_Bear           | x   | x         | in prog         |       |           |
+| Jeantet_Turtle        | x   |           |                 |       |           |
+| Minasandra_Hyena      | x   |           |                 |       |           |
+| Yu_Duck               | x   | x         | x               | x     | x         |
+| Makaewa_Gull          | x   | x         | (6 individuals) | x     | x         |
+| Dunford_Cat           | x   | x         | x               | x     | x         |
+| Ferdinandy_Dog        | x   | x         | x               | x     | x         |
+| HarveyCaroll_Pangolin | x   | x         | x               | x     | x         |
+| Hanscom_KangarooRat   | -   | -         |                 |       |           |
 - 26/06: I'm one file away from extracting the echidna data (forgot that it was running and closed laptop oops) and have nearly completed the feature generation for the datasets I extracted yesterday. Today I will:
 	- [x] Finish extracting echidna data
 	- [x] Email Dr Hui Yu re: collaboration (meeting next week?)
@@ -64,7 +66,25 @@
 ![[Pasted image 20250629113733.png|400]]
 - Adding into that some of the sequence stats that I calculated earlier made Bayes more significant but none of the other variables themselves became significant... So... that means that I have a barely significant result... but it is something! Keep working on it! Yay!
 ![[Pasted image 20250629114423.png|500]]
+- Looked at mixed effects with Species as Random, and that made bayesian and duration both highly significant. Looking very promising.
+	- For now will just continue adding datasets to the mix and begin working on the introduction
 
+- 30/06: Pagano_Bear has so much data it ran for days and still didn't finish generating features. Far out... So I'm thinking that I'm going to have to crop it and only take the first half of all behaviours or something... but then that would destroy sequence information... Maybe just do it all since I'm working on other things for the next 2 days anyway.
+- 1/07: Hanscom_KangarooRat doesn't have available raw training data, so I'm going to have to use their feature data. I can use this to build a model anyway. It doesn't give me as much control, but is fine. Just have to remember that this is different. And have to assign column names so it'll work. There's also no time as far as I can see which is frustrating... Do I bother? I wanted to because it has unlabelled data as well, which is quite rare.
+	- Wait... frick me. There's no ID, no Time, and the unlabelled data has SO many more variables than the labelled... and they're not labelled. Going to have to abandon this dataset... or maybe email them?
+	- Emailed the lead author... may or may not get any response from that.
+		- Okay he responded saying he would only give me the data if he was an author on the paper. That annoyed me so much ugh. Like you're not getting authorship in exchange for sharing non-vital data? Would have to give authorship to every single dataset then... I guess there's no reason to not do that... should I have offered authorship to the Ferdinandy team...? Probably I should have actually. Fuck. Asking Dave and Chris about that now.
+- 2/07: Going to try starting to write the introduction up properly today and see if I can get a full draft before I leave for Europe. Feeling a lot of mental blockage and difficulty convincing myself to do this but hopefully will get a roll on and it'll be easier than I think???
+	- Did some better stats today figuring out which of my interactions are important.
+![[Pasted image 20250702123036.png]]
+- Annoyingly, once I account for the interactions, I get different effects:]
+| **smoothing_typeHMMSmoothing** | –0.445 | 0.151 | –2.95 | 0.0045 | ** |  
+| **smoothing_typeLSTMSmoothing** | –0.344 | 0.150 | –2.29 | 0.0255 | * |  
+| **smoothing_typeHMMSmoothing:Transition_Rate** | 14.86 | 5.25 | 2.83 | 0.0063 | ** |  
+| **smoothing_typeHMMSmoothing:Prop_Transitions** | 0.898 | 0.294 | 3.06 | 0.0033 | ** |  
+| **smoothing_typeHMMSmoothing:Transition_Rate:Prop_Transitions** | –24.31 | 6.80 | –3.57 | 0.0007 | *** |
+Other terms (main effects and interactions) were not statistically significant (_p_ > 0.1).
+- I think this is kind of 2 different questions though. 1 I'm looking at which one improves it, with no covariables. And then I look at the effect of sequences. Cool. 
 
 
 

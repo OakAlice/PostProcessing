@@ -78,6 +78,8 @@ if (file.exists(file.path(base_path, "Data", species, "Feature_data.csv"))){
                                      sample_rate = sample_rate, 
                                      overlap_percent = 10)
     
+    fwrite(feature_data, file.path(base_path, "Data", species, paste0(id, "_Feature_data.csv")))
+    
     generated_features[[id]] <- feature_data
   }
   generated_features_df <- bind_rows(generated_features)
