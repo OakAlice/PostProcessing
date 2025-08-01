@@ -76,7 +76,9 @@ processDataPerID <- function(id_raw_data, features_type, window_length, sample_r
   }
   
   # Use lapply to process each window for the current ID
+  plan(multisession) # parallel processing
   window_features_list <- lapply(1:num_windows, process_window)
+  plan(sequential)
   
   # Combine all the windows for this ID into a single data frame
   features <- bind_rows(window_features_list)

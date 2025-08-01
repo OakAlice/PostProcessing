@@ -85,7 +85,10 @@
 | **smoothing_typeHMMSmoothing:Transition_Rate:Prop_Transitions** | –24.31 | 6.80 | –3.57 | 0.0007 | *** |
 Other terms (main effects and interactions) were not statistically significant (_p_ > 0.1).
 - I think this is kind of 2 different questions though. 1 I'm looking at which one improves it, with no covariables. And then I look at the effect of sequences. Cool. 
-
+#### Had been calculating relative change wrong
+- Damn it. I had been doing ((score - baseline) / baseline) but I actually just want score-baseline. This is what we get now... and the stats don't change by much
+![[Pasted image 20250702141035.png]]
+- 3/7: Have cracked the shits with pagano dataset. 1 more individual to go. Do I wait? It's consumed my desktop for nearly a week. Yeah gotta wait for it... Will do the goat dataset instead.
 
 
 

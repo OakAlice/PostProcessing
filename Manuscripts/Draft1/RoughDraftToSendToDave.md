@@ -1,3 +1,4 @@
+# Methods
 ### Data
 #### Sourcing
 Data for this study was raw animal-borne accelerometer data, including sampling timestamps, ID of sampled individual, and unprocessed tri-axial accelerometer recordings. Data was acquired from 15 sources, capturing raw accelerometer movement data from 13 species. Datasets sources and characteristics are described in Table 1 below. Data included labelled and unlabelled sources. Labelled data contained ground-truthed behavioural labels and was used as the training dataset; all included datasets included training data. Unlabelled data lacked ground-truthed behavioural annotation and was generally from deployment on wild free-roaming animals. This data was used to address ecological questions and was only sourced from a minority of papers.
@@ -67,3 +68,60 @@ For each dataset, a sequence question was designed to calculate the average dura
 Finally, to determine which of the methods was optimal for post-processing accelerometer-based behavioural predictions, the difference between the weighted-average F1-score for each post-processing method and the score for the control method was calculated as the 'relative improvement'. A mixed effects model was constructed with relative improvement as the dependent variable and method, proportion of sequences including transitions, and average transitions per sequence as predictor variables, and species as a random effect.
 
 ==unsure whether Species should be a random effect or a variable? since they aren't true replicates of each other but I'm treating them like they are==
+# Results
+
+==Results aren't complete because some of the datasets are still processing but I've put in what I've got so far... presuming that it wont change drastically==
+### Relative Performance Changes
+The performance of the base classifier with no post-processing (control) differed between species with a range 0.2-0.7 weighted-average F1-score. Each post-processing method had a differing effect on each of the species. The unique characteristics of each dataset make their performance challenging to compare to each other, but considering only the relative differences between the post-processed performance and control method, some trends can be observed.
+
+==***Unsure which metric to use so have shown 2. The results dont change, but slight details in the stats do so it doesn't really matter???***==
+*first fig is (Score - Baseline) / Baseline*
+
+![[Pasted image 20250702120659.png|700]]
+*second fig is (Score - Baseline)*
+![[Pasted image 20250702141035.png]]
+***Figure 2.** Relative change in weighted-average F1-Score for each dataset and post-processing method. Star symbols represent the performance of the base-classifier with no post-processing (control) --- set to 0 as the baseline. Colours represent performance of each trialled post-processing method as a relative change from the performance of the control.*
+
+Firstly, a linear mixed-effects model was used to assess the effects of post-processing method on the relative change in classification performance, with Species included as a random effect. Use of Naive Bayes post-processing was found to have a significant positive effect (β = 0.313, SE = 0.098, t(53) = 3.21, p = 0.002) as was duration-based post-processing (β = 0.259, SE = 0.101, t(53) = 2.56, p = 0.013). Other methods such as Mode-based, Transition, and HMM Post-processing showed marginal effects (p = 0.056–0.080) while Confusion and LSTM methods did not significantly change from the control.
+#### Looking at the effect of continuousness
+- To assess the effect of the continuousness of recording in the training data, these covariates (proportion of sequences that included transitions, and the rate of transitions) were added to the model. Firstly, the importance of the interactions between the three predictor variables was assessed by comparing three models: minimal with no interactions, medium with all 2-way interactions, and a full model with three-way interactions. The medium and full model were found to both be significantly better at explaining the variance in the model than the minimal model, and thus the full model was used. This full model found multiple significant effects.
+- When accounting for transition rate and proportion of sequences with transitions, HMM and LSTM methods had a significantly negative effect on performance (_β_ = –0.445, _SE_ = 0.151, _t_ = –2.95, _p_ = 0.0045 and _β_ = –0.344, _SE_ = 0.150, _t_ = –2.29, _p_ = 0.0255, respectively). However, the performance of HMM improved significantly with increased transition rate (_β_ = 14.86, _p_ = 0.0063) and proportion of transitions (_β_ = 0.898, _p_ = 0.0033). There was also a three way interaction, though, with a negative effect (_β_ = –24.31, _SE_ = 6.80, _t_ = –3.57, _p_ = 0.0007).
+
+However, Transition_Rate and Prop_Transitions have a weak covariation.. If I drop the latter and just use the former, then results are a little different. 
+- For one, the medium model is the best explanatory model.
+- Bayesian Smoothing had a significant positive effect on performance (β = 0.098, p = 0.049).
+- A significant positive interaction between LSTM Smoothing and Transition Rate (β = 1.83, p = 0.0048)
+- The interaction between Transition Smoothing and transition rate was marginally significant (β = 1.20, p = 0.058).
+- This is slightly more what I would have expected seeing...
+
+### Changes to Ecological Interpretation
+==have only done this for 1 individual from 1 dataset just due to processing time and my desktop being busy with other stuff but its still proof of theory ==
+![[Pasted image 20250619210043.png|700]]
+# Discussion
+==just some notes to show where my thinking is going==
+In this study, we compared the effect of seven post-processing techniques on the classification performance of accelerometer-based behavioural classification predictions. 
+
+**Base performance**
+- The base, control, classification differed in performance between species between 0.2-0.7 weighted-average F1-score. 
+- Studd_Squirrel dataset did the worst (likely because of lowest sample rate) and the Sparkes_Koala did the best (probably because it was validated differently to the remainder datasets and thus had a significant advantage). 
+- Performance within the other datasets would have been dependent on various factors such as volume of data, number of classes (affecting random baseline), and the distinctiveness between the class boundaries --- variables that are all beyond the scope of this study.
+
+**Effect of post-processing**
+- Naive Bayes and Duration-based smoothing were both found to produce significant improvements in the classification performance (ranging from 0.01 to 0.4 improvement). Mode-based, Transition, and HMM had marginal effects close to significance. 
+- This suggests that inclusion of a post-processing method will improve performance, but differently for each dataset. Worth playing around with your datasets strengths and weaknesses to see which of the post-processing methods are best for your data.
+
+**Impact on training transitions on post-processing**
+- When accounting for transition rate and proportion of sequences with transitions, HMM and LSTM methods had a significantly negative effect. HMM improved significantly with increased transition rate and proportion of transitions, but there was also a three way interaction with a negative effect suggesting that HMM is helpful in dynamic sequences with rapid transitions.
+- However, when you just use the transition rate,  there's a significant positive interaction between LSTM Smoothing and transition rate, with a marginal effect of transition rate on Transition Smoothing.
+- I find it very weird that Bayesian Smoothing isn't affected by the transition rate...?
+- A limitation for all post-processing methods that learn from natural sequences in the training data however is that they rely on those natural sequences being represented in the training data. That is, these methods will only present improvements when the training data represents long continuous stretches of behaviour, containing multiple natural transitions. While some studies collect behaviour in this way, it is not true of all studies. In the koala data used in this study, for example, training data was not collected in sequence but as isolated representative snippets. More than 90% of sequences in the training data contained only 1 behaviour, with 2 behaviours in only very small minority. Thus, there were very few transitions for the models to learn from, providing such limited information that the higher-order post-processing methods failed to confer advantages over the most basic modal smoothing. Given that several of the models had interactions with the metrics of continuousness, it may explain why these models could not effectively learn from the data.
+
+**Meaning of the study**
+By incorporating higher-level inference, and utilising the sequential information available in time-series data, we are able to achieve higher classification performance without needing perfect classification accuracy during the ML prediction stage. In light of this performance gain, as a research community, we must now ask whether the substantial effort required to marginally improve classification model performance is still necessary, particularly given that simpler post-processing steps enable similar gains. Enhancing a model often demands significant resources such as collecting new data from rare behaviours or additional individuals, computationally expensive  hyper-parameter tuning, and careful balancing of model power against over-fitting. In contrast, post-processing methods can be readily applied to existing model outputs, using the data already available. 
+
+Furthermore, in many ecological studies, the objective is not to capture behaviour at the finest temporal resolution, but to reveal broader patterns of activity. These coarse-scale trends are typically robust to local misclassifications and may not require high-fidelity predictions at every time step, so long as the outputs reflect meaningful ecological processes. Thus, given that perfection is neither possible nor necessary, a more parsimonious, easily implemented, and interpreted result is suggested in post-processing.
+
+**Recommendations**
+- In future, we should aim to collect more natural training data representative of true sequences of behaviour and including the transitions that we will be modelling out in reality.
+- Design a perfect smoother by incorporating detailed ecological knowledge about plausible sequences and meaningful duration.
+- This study is a first exploratory step into the possibility of incorporating ecological knowledge into the way we design and deploy these models. We hope to inspire others to consider the potential for this approach.
