@@ -9,13 +9,12 @@ Output/
 !/Data/Ferdinandy_Dog/
 !/Data/Ferdinandy_Dog/**
 
+
 # Ignore R history files
 *.Rhistory
 
 # Ignore various other file types
-*.csv
 *.txt
-*.rds
 *.rda
 *.pdf
 *.png
