@@ -1,7 +1,7 @@
 # Main Script -------------------------------------------------------------
 
-# base_path <- "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
-base_path <- "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
+base_path <- "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
+#base_path <- "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
 
 #install.packaged("pacman")
 library(pacman)
@@ -30,7 +30,22 @@ library(future.apply)
 species <- "Mauny_Goat" # dataset name
 target_activity <- "Walk" # behaviour that the ecological analyses will be about
 
-all_species <- c("Dunford_Cat", "Ferdinandy_Dog", "Ladds_Seal", "Maekawa_Gull", "Smit_Cat", "Sparkes_Koala", "Studd_Squirrel", "Vehkaoja_Dog", "Yu_Duck") 
+all_species <- c("Dunford_Cat", "Ferdinandy_Dog", "Ladds_Seal", "Maekawa_Gull", "Smit_Cat", "Studd_Squirrel", "Vehkaoja_Dog", "Yu_Duck", "HarveyCaroll_Pangolin", "Mauny_Goat") #, "Sparkes_Koala") 
+sample_rates <- list(Dunford_Cat = 40,
+                     Ferdinandy_Dog = 100,
+                     Ladds_Seal = 25,
+                     Maekawa_Gull = 25,
+                     Smit_Cat = 30,
+                     Sparkes_Koala = 50,
+                     Studd_Squirrel = 1,
+                     Vehkaoja_Dog = 100,
+                     Yu_Duck = 25,
+                     HarveyCaroll_Pangolin = 50,
+                     Mauny_Goat = 5)
+
+# Dataset Characteristics -------------------------------------------------
+# define traits from each of the datasets
+source(file = file.path(base_path, "Scripts", "DataFormatting", "DatasetCharacteristics.R"))
 
 # Format Data -------------------------------------------------------------
 # collecting the data from various sources and formatting it to standardised structure
@@ -80,12 +95,6 @@ source(file = file.path(base_path, "Scripts", "SmoothingMethods", "HMMSmoothing.
 # Bayesian Smoothing ------------------------------------------------------
 # Bayes rules to smooth transitions
 source(file = file.path(base_path, "Scripts", "SmoothingMethods", "BayesianSmoothing.R"))
-
-# Kalmann Filter Smoothing ------------------------------------------------
-## TODO: Fix this
-#for (species in c("Yu_Duck", "Smit_Cat", "Vehkaoja_Dog", "Studd_Squirrel", "Ladds_Seal", "Dunford_Cat", "Maekawa_Gull")){
-# source(file = file.path(base_path, "Scripts", "SmoothingMethods", "KalmannSmoothing.R"))
-#}
 
 # LSTM Smoothing ----------------------------------------------------------
 # Using a basic neural network to learn the natural sequences of behaviour
