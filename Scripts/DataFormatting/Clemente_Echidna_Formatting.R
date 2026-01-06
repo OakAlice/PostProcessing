@@ -73,7 +73,7 @@ if (file.exists(file.path(base_path, "Data", species, "Feature_data.csv"))){
                                      features_type = c("timeseries", "statistical"), 
                                      window_length = 2, # to give it more data to work with 
                                      sample_rate = sample_rate, 
-                                     overlap_percent = 10)
+                                     overlap_percent = overlap)
     
     generated_features[[id]] <- feature_data
   }

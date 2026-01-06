@@ -27,11 +27,13 @@ library(future)
 library(future.apply)
 
 # Define variables for this run -------------------------------------------
-species <- "Mauny_Goat" # dataset name
+species <- "Galea_Cat" # dataset name
 target_activity <- "Walk" # behaviour that the ecological analyses will be about
+overlap <- 0 # same for every dataset
 
-all_species <- c("Dunford_Cat", "Ferdinandy_Dog", "Ladds_Seal", "Maekawa_Gull", "Smit_Cat", "Studd_Squirrel", "Vehkaoja_Dog", "Yu_Duck", "HarveyCaroll_Pangolin", "Mauny_Goat") #, "Sparkes_Koala") 
-sample_rates <- list(Dunford_Cat = 40,
+all_species <- c("Galea_Cat", "Dunford_Cat", "Ferdinandy_Dog", "Ladds_Seal", "Maekawa_Gull", "Smit_Cat", "Studd_Squirrel", "Vehkaoja_Dog", "Yu_Duck", "HarveyCaroll_Pangolin", "Mauny_Goat") #, "Sparkes_Koala") 
+sample_rates <- list(Galea_Cat = 50,
+                     Dunford_Cat = 40,
                      Ferdinandy_Dog = 100,
                      Ladds_Seal = 25,
                      Maekawa_Gull = 25,
@@ -67,6 +69,12 @@ source(file = file.path(base_path, "Scripts", "ModelBuilding", "BuildModel.R"))
 source(file = file.path(base_path, "Scripts", "PerformanceTestingFunctions.R"))
 source(file = file.path(base_path, "Scripts", "EcologicalTestingFunctions.R"))
 source(file = file.path(base_path, "Scripts", "PlottingFunctions.R"))
+
+
+# Make the directory ------------------------------------------------------
+if (!dir.exists(file.path(base_path, "Output", species))){
+  dir.create(file.path(base_path, "Output", species))
+}
 
 # No Smoothing ------------------------------------------------------------
 # assess performance and base stats of the raw predictions

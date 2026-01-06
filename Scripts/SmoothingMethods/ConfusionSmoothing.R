@@ -1,11 +1,18 @@
 # Confusion Smoothing -----------------------------------------------------
+
+
+
+# Archived this script and no longer using this method
+
+
+
 # not all predictions are created equal
 # the confusion matrix from the model creation step tells us information about which predictions are better than others
 # using this information we will improve on duration based smoothing
 # TODO: Is learning from the training data really meaningles here?
 
 # Function ----------------------------------------------------------------
-applying_confusion_changes <- function(data, confusion_likelihood, threshold = 0.5){
+applying_confusion_changes <- function(data, confusion_likelihood){
   
   # Detect change points
   data <- data %>%
@@ -65,8 +72,11 @@ applying_confusion_changes <- function(data, confusion_likelihood, threshold = 0
   set(result, j = "max_prob", value = pmax(result$prob_before, result$prob_after, na.rm = TRUE))
   set(result, j = "label", value = fifelse(result$prob_before >= result$prob_after, result$before, result$after))
   
+  # defining the threshold based on chance
+  chance_threshold <- 1/length(unique(data$true_class))
+  
   # Only update if above threshold and not part of a sequence
-  valid <- result[!same_as_neighbors & !is.na(max_prob) & max_prob > threshold]
+  valid <- result[!same_as_neighbors & !is.na(max_prob) & max_prob > chance_threshold * 2]
   
   if (nrow(valid) > 0) {
     data$smoothed_class[valid$idx] <- valid$label
@@ -100,7 +110,7 @@ confusion_likelihood <- as.data.frame(as.table(confusion)) %>%
 test_data <- fread(file.path(base_path, "Data", species, "Original_predictions.csv")) %>%
   as.data.frame() %>%
   arrange(ID, Time) 
-data <- applying_confusion_changes(data = test_data, confusion_likelihood, threshold = 0.3)
+data <- applying_confusion_changes(data = test_data, confusion_likelihood)
 
 # Recalculate performance and save
 performance <- compute_metrics(as.factor(data$smoothed_class), as.factor(data$true_class))

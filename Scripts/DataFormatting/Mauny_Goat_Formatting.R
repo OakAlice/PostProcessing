@@ -59,7 +59,7 @@ if (file.exists(file.path(base_path, "Data", species, "Feature_data.csv"))){
                                      features_type = c("timeseries", "statistical"), 
                                      window_length = 3, # made it longer to account for low sampling rate
                                      sample_rate = sample_rate, 
-                                     overlap_percent = 10)
+                                     overlap_percent = overlao)
    # because its so big, save incrementally
     fwrite(feature_data, file.path(base_path, "Data", species, paste0(id, "_feature_data.csv")))
     

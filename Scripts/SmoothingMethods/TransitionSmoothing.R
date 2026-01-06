@@ -21,7 +21,7 @@ find_breaks <- function(data, x){
   return(data)
 }
 
-find_suspect_transitions <- function(data, transition_probs_melted, x = 10, threshold = 0.3){
+find_suspect_transitions <- function(data, transition_probs_melted, x = 10){
   data <- find_breaks(data, x)
   data <- data %>%
     group_by(ID, sequence) %>%
@@ -33,13 +33,17 @@ find_suspect_transitions <- function(data, transition_probs_melted, x = 10, thre
     mutate(predicted_class = as.factor(predicted_class),
            previous_class = as.factor(previous_class))
   
+  # define the threshold at which probability is accepted based on changce rate
+  chance_threshold <- 1/length(unique(data$true_class))
+  
+  # apply this
   prob_data <- data %>%
     left_join(transition_probs_melted, 
               by = c("previous_class" = "First", 
                      "predicted_class" = "Second")) %>%
     mutate(
       likelihood = case_when(
-        change_point == 1 & (is.na(Probability) | Probability < threshold) ~ "SUSPICIOUS",
+        change_point == 1 & (is.na(Probability) | Probability < 2 * chance_threshold) ~ "SUSPICIOUS",
         TRUE ~ "ACCEPTABLE"
       )
     ) %>%
@@ -62,9 +66,6 @@ update_suspect_transitions <- function(data){
 }
 
 # Code --------------------------------------------------------------------
-train_data <- fread(file.path(base_path, "Data", species, "Feature_data.csv")) %>%
-  rename(true_class = Activity)
-
 if (species == "Vehkaoja_Dog"){
   x <- 180 # this one is different time stamps
 } else {
@@ -102,11 +103,13 @@ transition_probs$First <- rownames(transition_probs)
 transition_probs_melted <- transition_probs %>%
   pivot_longer(cols = -First, names_to = "Second", values_to = "Probability")
 
+
+
 # I can then use these percentages to assess the validity of the transitions we see in the predictions
 ## Find all transitions in the predictions data ---------------------------
 test_data <- fread(file.path(base_path, "Data", species, "Original_predictions.csv"))
 
-test_data <- find_suspect_transitions(test_data, transition_probs_melted, x = 10, threshold = 0.3)
+test_data <- find_suspect_transitions(test_data, transition_probs_melted, x = 10)
 
 # TODO: Change the logic of how I modify suspicious events
 # for now I'm going with the simple method of denying the transition

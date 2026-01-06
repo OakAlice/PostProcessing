@@ -14,7 +14,7 @@ apply_bayes_smoothing <- function(data, states, transition_matrix){
   
   # Set a basic uniform prior
   prior <- rep(1 / n_class, n_class)  # uniform prior
-  smoothed_probs[1, ] <- prior * as.numeric(data[1, ..states]) # .. means doesnt literally search for "states"
+  smoothed_probs[1, ] <- prior * as.numeric(data[1, ..states]) # '..' means doesnt literally search for "states"
   smoothed_probs[1, ] <- smoothed_probs[1, ] / sum(smoothed_probs[1, ])
   
   # Recursively apply Bayesian update
@@ -26,7 +26,7 @@ apply_bayes_smoothing <- function(data, states, transition_matrix){
     likelihood <- as.numeric(data[t, ..states])
     posterior <- prior * likelihood
     
-    # Normalize
+    # Normalise
     smoothed_probs[t, ] <- posterior / sum(posterior)
   }
   
