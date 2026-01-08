@@ -1,7 +1,7 @@
 # Main Script -------------------------------------------------------------
 
-base_path <- "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
-#base_path <- "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
+# base_path <- "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
+base_path <- "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
 
 #install.packaged("pacman")
 library(pacman)
@@ -31,8 +31,11 @@ species <- "Galea_Cat" # dataset name
 target_activity <- "Walk" # behaviour that the ecological analyses will be about
 overlap <- 0 # same for every dataset
 
-all_species <- c("Galea_Cat", "Dunford_Cat", "Ferdinandy_Dog", "Ladds_Seal", "Maekawa_Gull", "Smit_Cat", "Studd_Squirrel", "Vehkaoja_Dog", "Yu_Duck", "HarveyCaroll_Pangolin", "Mauny_Goat") #, "Sparkes_Koala") 
+all_species <- c( "Dunford_Cat", "Ferdinandy_Dog", "Ladds_Seal", 
+                  "Maekawa_Gull", "Smit_Cat", "Studd_Squirrel", "Vehkaoja_Dog", "Yu_Duck", 
+                  "HarveyCaroll_Pangolin", "Mauny_Goat", "Clemente_Echidna", "Galea_Cat") #, "Sparkes_Koala") 
 sample_rates <- list(Galea_Cat = 50,
+                     Pagano_Bear = 16,
                      Dunford_Cat = 40,
                      Ferdinandy_Dog = 100,
                      Ladds_Seal = 25,
@@ -45,32 +48,38 @@ sample_rates <- list(Galea_Cat = 50,
                      HarveyCaroll_Pangolin = 50,
                      Mauny_Goat = 5)
 
+
+# Functions ---------------------------------------------------------------
+source(file = file.path(base_path, "Scripts", "DataFormatting", "GenerateFeatures_Functions.R"))
+source(file = file.path(base_path, "Scripts", "PerformanceTestingFunctions.R"))
+source(file = file.path(base_path, "Scripts", "EcologicalTestingFunctions.R"))
+source(file = file.path(base_path, "Scripts", "PlottingFunctions.R"))
+
 # Dataset Characteristics -------------------------------------------------
 # define traits from each of the datasets
-source(file = file.path(base_path, "Scripts", "DataFormatting", "DatasetCharacteristics.R"))
+# source(file = file.path(base_path, "Scripts", "DataFormatting", "DatasetCharacteristics.R"))
 
 # Format Data -------------------------------------------------------------
 # collecting the data from various sources and formatting it to standardised structure
+
+run_species <- all_species[3:length(all_species)]
+for (species in run_species){ # TODO: remove this
 available_axes <- c("X", "Y", "Z") 
 
-source(file = file.path(base_path, "Scripts", "DataFormatting", "GenerateFeatures_Functions.R"))
+print(species)
+
 source(file = file.path(base_path, "Scripts", "DataFormatting", paste0(species, "_Formatting.R")))
+source(file = file.path(base_path, "Scripts", "DataFormatting", "GenerateFeatures.R"))
 
 # Sequential data report --------------------------------------------------
 # how natural is this data? # haven't turned this into a markdown yet
-source(file = file.path(base_path, "Scripts", "SequentialReport.R"))
+# source(file = file.path(base_path, "Scripts", "SequentialReport.R"))
 
 # Make the Model ----------------------------------------------------------
 # tune, train, and test a model and generate predictions on the test data
 source(file = file.path(base_path, "Scripts", "ModelBuilding", "BuildModel.R"))
 
 # Compare the smoothing options -------------------------------------------
-# Important functions -----------------------------------------------------
-source(file = file.path(base_path, "Scripts", "PerformanceTestingFunctions.R"))
-source(file = file.path(base_path, "Scripts", "EcologicalTestingFunctions.R"))
-source(file = file.path(base_path, "Scripts", "PlottingFunctions.R"))
-
-
 # Make the directory ------------------------------------------------------
 if (!dir.exists(file.path(base_path, "Output", species))){
   dir.create(file.path(base_path, "Output", species))
@@ -88,10 +97,6 @@ source(file = file.path(base_path, "Scripts", "SmoothingMethods", "ModeSmoothing
 # removing too-short instances based on the 95th percentile durations
 source(file = file.path(base_path, "Scripts", "SmoothingMethods", "DurationSmoothing.R"))
 
-# Confusion Smoothing -----------------------------------------------------
-# correcting for flaws in the prediction system
-source(file = file.path(base_path, "Scripts", "SmoothingMethods", "ConfusionSmoothing.R"))
-
 # Transition Smoothing ----------------------------------------------------
 # removing improbable behavioural transitions
 source(file = file.path(base_path, "Scripts", "SmoothingMethods", "TransitionSmoothing.R"))
@@ -106,9 +111,10 @@ source(file = file.path(base_path, "Scripts", "SmoothingMethods", "BayesianSmoot
 
 # LSTM Smoothing ----------------------------------------------------------
 # Using a basic neural network to learn the natural sequences of behaviour
-source(file = file.path(base_path, "Scripts", "SmoothingMethods", "LSTMSmoothing.R"))
+# TODO: reinstate this
+# source(file = file.path(base_path, "Scripts", "SmoothingMethods", "LSTMSmoothing.R"))
 
-
+} # TODO: remove this
 
 # Comparing Smoothing Performances ----------------------------------------
 # this will pull out all the metrics tests and build a report for rapid comparison

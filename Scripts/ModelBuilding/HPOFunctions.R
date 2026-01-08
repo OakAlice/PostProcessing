@@ -9,6 +9,10 @@ removeBadFeatures <- function(feature_data, var_threshold, corr_threshold) {
   variances <- numeric_columns[, lapply(.SD, var, na.rm = TRUE)]
   selected_columns <- names(variances)[!is.na(variances) & variances > var_threshold]
   
+  if (!length(selected_columns) > 2){
+    selected_columns <- names(variances)[!is.na(variances)] # include all of them then
+  }
+  
   # Step 2: Remove highly correlated features
   numeric_columns <- numeric_columns[, ..selected_columns]
   corr_matrix <- cor(numeric_columns, use = "pairwise.complete.obs")
@@ -24,7 +28,9 @@ RFModelOptimisation <- function(feature_data, data_split, number_trees, mtry, ma
     # remove bad features
     feature_data <- as.data.table(feature_data)
     
-    clean_cols <- removeBadFeatures(feature_data, var_threshold = 0.3, corr_threshold = 0.9)
+    var <- ifelse(species == "Ferdinandy_Dog", 0.01, 0.3)
+    
+    clean_cols <- removeBadFeatures(feature_data, var_threshold = var, corr_threshold = 0.9)
     clean_feature_data <- feature_data %>%
       select(c(!!!syms(clean_cols), "Activity", "ID", "Time")) %>% 
       na.omit()

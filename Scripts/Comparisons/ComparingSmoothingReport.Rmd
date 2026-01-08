@@ -23,7 +23,8 @@ metrics_list <- list.files(
 
 metrics <- lapply(metrics_list, function(file) {
   fread(file) %>%
-    mutate(smoothing_type = basename(file)) 
+    mutate(smoothing_type = basename(file)) %>%
+    rename(Activity = 1) # rename to Activity in all cases
 })
 
 # remove Class: from the Activity and .csv from the smoothing_type

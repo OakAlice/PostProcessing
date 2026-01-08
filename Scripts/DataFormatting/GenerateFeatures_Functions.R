@@ -11,7 +11,9 @@ processDataPerID <- function(id_raw_data, features_type, window_length, sample_r
   
   # Function to process each window for this specific ID
   process_window <- function(i) {
-    print(i)
+    
+    if (i %% 100 == 0) {print(i)}
+    
     start_index <- max(1, round((i - 1) * (samples_per_window - overlap_samples) + 1))
     end_index <- min(start_index + samples_per_window - 1, nrow(id_raw_data))
     window_chunk <- id_raw_data[start_index:end_index, ]

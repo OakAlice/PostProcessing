@@ -8,26 +8,29 @@ library(R.matlab)
 sample_rate <- 10
 
 # Get the files out of matlab ---------------------------------------------
-input_dir <- "R:/FSHEE/Science/Unsupervised-Accel/Echidna data/echidna analysis" # they are stored here
-output_dir <- "R:/FSHEE/Science/Unsupervised-Accel/Echidna data/Raw_data"
-
-sure <- FALSE
-# this takes FOREVER TO DO so be sure
-if (sure == TRUE){
-  mat_files <- list.files(input_dir, pattern = "\\.mat$", full.names = TRUE)
-  file <- mat_files[64]
-  for (file in mat_files) {
-    data <- readMat(file)
-    if ("Time.Acc.Temp.Activity.Mat.Scored" %in% names(data)) {
-      df <- data[["Time.Acc.Temp.Activity.Mat.Scored"]]
-      if (is.matrix(df) || is.data.frame(df)) {
-        out_file <- file.path(output_dir,
-                              paste0(tools::file_path_sans_ext(basename(file)), "_Extracted.csv"))
-        write.csv(df, out_file, row.names = FALSE)
+if (file.exists(file.path(base_path, "Data", species, "Formatted_raw_data.csv"))){
+  print("data already formatted")
+} else {
+  input_dir <- "R:/FSHEE/Science/Unsupervised-Accel/Echidna data/echidna analysis" # they are stored here
+  output_dir <- "R:/FSHEE/Science/Unsupervised-Accel/Echidna data/Raw_data"
+  
+  sure <- FALSE
+  # this takes FOREVER TO DO so be sure
+  if (sure == TRUE){
+    mat_files <- list.files(input_dir, pattern = "\\.mat$", full.names = TRUE)
+    file <- mat_files[64]
+    for (file in mat_files) {
+      data <- readMat(file)
+      if ("Time.Acc.Temp.Activity.Mat.Scored" %in% names(data)) {
+        df <- data[["Time.Acc.Temp.Activity.Mat.Scored"]]
+        if (is.matrix(df) || is.data.frame(df)) {
+          out_file <- file.path(output_dir,
+                                paste0(tools::file_path_sans_ext(basename(file)), "_Extracted.csv"))
+          write.csv(df, out_file, row.names = FALSE)
+        }
       }
     }
   }
-}
 
 # Format the non-aggregate ones together ----------------------------------
 if(!file.exists(file.path(output_dir, "Formatted_all_data.csv"))){
@@ -55,30 +58,4 @@ if(!file.exists(file.path(output_dir, "Formatted_all_data.csv"))){
   unlabelled_data <- data %>% filter(Activity == "0") %>% select(!Activity)
   fwrite(unlabelled_data, file.path(output_dir, "Formatted_unlabelled_data.csv"))
 }
-
-# Generate the features ---------------------------------------------------
-if (file.exists(file.path(base_path, "Data", species, "Feature_data.csv"))){
-  print("training features already generated")
-} else {
-  
-  data1 <- fread(file.path(base_path, "Data", species, "Formatted_raw_data.csv"))
-  
-  generated_features <- list()
-  for (id in unique(data1$ID)){
-    data <- data1 %>% 
-      filter(ID == id) %>% 
-      as.data.table()
-    
-    feature_data <- processDataPerID(data, 
-                                     features_type = c("timeseries", "statistical"), 
-                                     window_length = 2, # to give it more data to work with 
-                                     sample_rate = sample_rate, 
-                                     overlap_percent = overlap)
-    
-    generated_features[[id]] <- feature_data
-  }
-  generated_features_df <- bind_rows(generated_features)
-  fwrite(generated_features_df, file.path(base_path, "Data", species, "Feature_data.csv"))
 }
-
-
