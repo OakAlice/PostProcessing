@@ -6,6 +6,16 @@ p_load(rBayesianOptimization,
 source(file = file.path(base_path, "Scripts", "ModelBuilding", "HPOFunctions.R"))
 source(file = file.path(base_path, "Scripts", "ModelBuilding", "TestFunctions.R"))
 
+if (
+  !file.exists(file.path(base_path, "Data", species, paste0("Training_predictions.csv"))) ||
+  difftime(Sys.time(), file.info(file.path(base_path, "Data", species, paste0("Training_predictions.csv")))$mtime, units = "hours") > hours_since_creation
+) {
+  
+  if (file.exists(file.path(base_path, "Data", species, paste0("Training_predictions.csv")))){
+    print("hours since creation:")
+    print(difftime(Sys.time(), file.info(file.path(base_path, "Data", species, paste0("Training_predictions.csv")))$mtime, units = "hours"))
+  }
+  
 # Split out test data -----------------------------------------------------
 data <- fread(file.path(base_path, "Data", species, "Feature_data.csv"))
 
@@ -23,8 +33,8 @@ other_data <- data %>% filter(!ID %in% test_IDs)
     number_trees = c(100, 1000)
   )
   
-  other_data <- other_data %>% as.data.table() %>%
-    group_by(ID, Activity) # %>%
+  # other_data <- other_data %>% as.data.table() %>%
+  #   group_by(ID, Activity) # %>%
     # slice(1:100) ## REMOVE THIS WHEN YOU're SERIOUES
   
   # this is optimised for weighted F1 score
@@ -138,3 +148,7 @@ metrics <- compute_metrics(predicted_classes = as.factor(predictions_df$predicte
 
 # Write to CSV
 write.csv(predictions_df, file = file.path(base_path, "Data", species, paste0("Training_predictions.csv")), row.names = FALSE)
+
+} else {
+  print("model and predictions recently made for this data")
+}

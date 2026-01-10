@@ -20,8 +20,11 @@ if(!file.exists(file.path(base_path, "Data", species, "Formatted_raw_data.csv"))
            Y = V5,
            Z = V6,
            Activity = V14)
-  
+  # subset it because the files are simply massive
+  raw_data <- raw_data %>% group_by(ID, Activity) %>% slice(1:10000) %>% ungroup() %>% arrange(ID, Time)
   # save this 
   fwrite(raw_data, file.path(base_path, "Data", species, "Formatted_raw_data.csv"))
+  
+ 
 }
   

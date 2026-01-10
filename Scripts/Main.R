@@ -30,10 +30,11 @@ library(future.apply)
 species <- "Galea_Cat" # dataset name
 target_activity <- "Walk" # behaviour that the ecological analyses will be about
 overlap <- 0 # same for every dataset
+hours_since_creation <- 5 # overwrite model and post-processing files if they were done more than X hrs ago
 
 all_species <- c( "Dunford_Cat", "Ferdinandy_Dog", "Ladds_Seal", 
-                  "Maekawa_Gull", "Smit_Cat", "Studd_Squirrel", "Vehkaoja_Dog", "Yu_Duck", 
-                  "HarveyCaroll_Pangolin", "Mauny_Goat", "Clemente_Echidna", "Galea_Cat") #, "Sparkes_Koala") 
+                  "Maekawa_Gull", "Smit_Cat", "Yu_Duck", "Vehkaoja_Dog", # "Studd_Squirrel",
+                  "HarveyCaroll_Pangolin", "Mauny_Goat", "Clemente_Echidna", "Galea_Cat", "Sparkes_Koala") 
 sample_rates <- list(Galea_Cat = 50,
                      Pagano_Bear = 16,
                      Dunford_Cat = 40,
@@ -46,7 +47,8 @@ sample_rates <- list(Galea_Cat = 50,
                      Vehkaoja_Dog = 100,
                      Yu_Duck = 25,
                      HarveyCaroll_Pangolin = 50,
-                     Mauny_Goat = 5)
+                     Mauny_Goat = 5,
+                     Clemente_Echidna = 10)
 
 
 # Functions ---------------------------------------------------------------
@@ -62,7 +64,7 @@ source(file = file.path(base_path, "Scripts", "PlottingFunctions.R"))
 # Format Data -------------------------------------------------------------
 # collecting the data from various sources and formatting it to standardised structure
 
-run_species <- all_species[3:length(all_species)]
+run_species <- all_species# [5:length(all_species)]
 for (species in run_species){ # TODO: remove this
 available_axes <- c("X", "Y", "Z") 
 
