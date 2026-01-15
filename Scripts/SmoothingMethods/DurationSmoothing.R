@@ -25,7 +25,7 @@ smooth_durations <- function(data, train_summary){
   
   setDT(data)
   predicted_lengths <- data[, .(
-    behaviour = predicted_class[1],
+    behaviour = as.character(predicted_class[1]),
     length = .N
   ), by = .(ID, sequence)]
   
@@ -61,14 +61,14 @@ train_data <- identify_sequences(train_data, "true_class")
 ## Learn from the training data
 setDT(train_data)
 train_lengths <- train_data[, .(
-  behaviour = true_class[1],
+  behaviour = as.character(true_class[1]),
   length = .N
 ), by = .(ID, sequence)]
 
 train_summary <- train_lengths[length > 1, .(p95 = quantile(length, 0.05)), by = behaviour]
 
 ## Use this to logic-gate the smoothing 
-test_data <- fread(file.path(base_path, "Data", species, "Original_predictions.csv"))
+test_data <- fread(file.path(base_path, "Data", species, paste0("Original_predictions_", i, ".csv")))
 test_data <- identify_sequences(test_data, "predicted_class")
 
 ## Check whether each instance is likely legit based on its duration
@@ -77,31 +77,7 @@ test_data <- smooth_durations(test_data, train_summary)
 # Recalculate performance and save
 performance <- compute_metrics(as.factor(test_data$smoothed_class), as.factor(test_data$true_class))
 metrics <- performance$metrics
-fwrite(metrics, file.path(base_path, "Output", species, "DurationSmoothing_performance.csv"))
+fwrite(metrics, file.path(base_path, "Output", species, paste0("DurationSmoothing_performance_", i, ".csv")))
 generate_confusion_plot(performance$conf_matrix_padded,
-                        save_path = file.path(base_path, "Output", species, "DurationSmoothing_performance.pdf"))
+                        save_path = file.path(base_path, "Output", species, paste0("DurationSmoothing_performance_", i, ".pdf")))
 
-# Calculate ecological results --------------------------------------------
-if (file.exists(file.path(base_path, "Data", species, "Unlabelled_predictions.csv"))){
-  ecological_data <- fread(file.path(base_path, "Data", species, "Unlabelled_predictions.csv"))
-    
-  # Apply the smoothing
-  ecological_data <- identify_sequences(ecological_data, "predicted_class")
-  ecological_data <- smooth_durations(ecological_data, train_summary)
-  
-  # Calculate what this means
-  eco <- ecological_analyses(smoothing_type = "Duration", 
-                             eco_data = ecological_data, 
-                             target_activity = target_activity)
-  
-  question1 <- eco$sequence_summary
-  question2 <- eco$hour_proportions
-  
-  # Write outputs
-  fwrite(question1, file.path(base_path, "Output", species, "DurationSmoothing_eco1.csv"))
-  fwrite(question2, file.path(base_path, "Output", species, "DurationSmoothing_eco2.csv"))
-  
-} else {
-  print("there is no ecological data for this dataset")
-}
- 

@@ -1,29 +1,18 @@
 # Master script for building the models for any given species etc ---------
 
-p_load(rBayesianOptimization, 
-       ranger)
-
 source(file = file.path(base_path, "Scripts", "ModelBuilding", "HPOFunctions.R"))
 source(file = file.path(base_path, "Scripts", "ModelBuilding", "TestFunctions.R"))
 
 if (
-  !file.exists(file.path(base_path, "Data", species, paste0("Training_predictions.csv"))) ||
-  difftime(Sys.time(), file.info(file.path(base_path, "Data", species, paste0("Training_predictions.csv")))$mtime, units = "hours") > hours_since_creation
+  !file.exists(file.path(base_path, "Data", species, paste0("Training_predictions_", i, ".csv"))) ||
+  difftime(Sys.time(), file.info(file.path(base_path, "Data", species, paste0("Training_predictions_", i, ".csv")))$mtime, units = "hours") > hours_since_creation
 ) {
-  
-  if (file.exists(file.path(base_path, "Data", species, paste0("Training_predictions.csv")))){
-    print("hours since creation:")
-    print(difftime(Sys.time(), file.info(file.path(base_path, "Data", species, paste0("Training_predictions.csv")))$mtime, units = "hours"))
-  }
   
 # Split out test data -----------------------------------------------------
 data <- fread(file.path(base_path, "Data", species, "Feature_data.csv"))
 
-test_IDs <- sample(unique(data$ID), 0.4*length(unique(data$ID)))
-print(paste0("number of individuals in the test set: ", length(test_IDs)))
-
-test_data <- data %>% filter(ID %in% test_IDs)
-other_data <- data %>% filter(!ID %in% test_IDs)                      
+test_data <- data %>% dplyr::filter(ID %in% test_IDs)
+other_data <- data %>% dplyr::filter(!ID %in% test_IDs)                      
 
 # Model design: hyperparameter tuning -------------------------------------
 # Based on a random forest, what hyperparamaters are best?
@@ -33,12 +22,7 @@ other_data <- data %>% filter(!ID %in% test_IDs)
     number_trees = c(100, 1000)
   )
   
-  # other_data <- other_data %>% as.data.table() %>%
-  #   group_by(ID, Activity) # %>%
-    # slice(1:100) ## REMOVE THIS WHEN YOU're SERIOUES
-  
   # this is optimised for weighted F1 score
-  # note that for Ferdinandy_Dog need to go into function and change var_threshold to 0.01
   results <- BayesianOptimization(
     FUN = function(number_trees, mtry, max_depth) {
       RFModelOptimisation(
@@ -89,7 +73,7 @@ other_data <- data %>% filter(!ID %in% test_IDs)
   )
   
   # save this model
-  saveRDS(RF_model, file.path(base_path, "Data", species, "Activity_model.rds"))
+  saveRDS(RF_model, file.path(base_path, "Data", species, paste0("Activity_model_", i, ".rds")))
 
 # Make predictions --------------------------------------------------------
 test_feature_data <- as.data.table(test_data)
@@ -117,8 +101,8 @@ metrics <- compute_metrics(predicted_classes = as.factor(predictions_df$predicte
                            ground_truth_labels = as.factor(predictions_df$true_class))
 
 # Write to CSV
-write.csv(metrics$metrics, file = file.path(base_path, "Data", species, paste0("Original_performance_metrics.csv")), row.names = FALSE)
-write.csv(predictions_df, file = file.path(base_path, "Data", species, paste0("Original_predictions.csv")), row.names = FALSE)
+write.csv(metrics$metrics, file = file.path(base_path, "Data", species, paste0("Original_performance_metrics_", i, ".csv")), row.names = FALSE)
+write.csv(predictions_df, file = file.path(base_path, "Data", species, paste0("Original_predictions_", i, ".csv")), row.names = FALSE)
 
 # Make predictions back on the training data ------------------------------
 # due to limitations of data availability for most of the datasets
@@ -147,7 +131,7 @@ metrics <- compute_metrics(predicted_classes = as.factor(predictions_df$predicte
                            ground_truth_labels = as.factor(predictions_df$true_class))
 
 # Write to CSV
-write.csv(predictions_df, file = file.path(base_path, "Data", species, paste0("Training_predictions.csv")), row.names = FALSE)
+write.csv(predictions_df, file = file.path(base_path, "Data", species, paste0("Training_predictions_", i, ".csv")), row.names = FALSE)
 
 } else {
   print("model and predictions recently made for this data")

@@ -35,7 +35,7 @@ RFModelOptimisation <- function(feature_data, data_split, number_trees, mtry, ma
       select(c(!!!syms(clean_cols), "Activity", "ID", "Time")) %>% 
       na.omit()
     
-    if (mtry > length(clean_cols)){
+    if (mtry > length(clean_cols)-1){
       print("mtry too big, making max clean cols")
       mtry <- length(clean_cols)
     }
@@ -85,8 +85,8 @@ RFModelOptimisation <- function(feature_data, data_split, number_trees, mtry, ma
           #Create training and validation data, split by ID
           test_IDs <- sample(unique(clean_feature_data$ID), 0.3*length(unique(clean_feature_data$ID)))
           
-          validation_data <- clean_feature_data %>% filter(ID %in% test_IDs)
-          training_data <- clean_feature_data %>% filter(!ID %in% test_IDs)                      
+          validation_data <- clean_feature_data %>% dplyr::filter(ID %in% test_IDs)
+          training_data <- clean_feature_data %>% dplyr::filter(!ID %in% test_IDs)                      
           
           # Separate into training and testing
           training_data <- training_data %>%
@@ -157,29 +157,34 @@ RFModelOptimisation <- function(feature_data, data_split, number_trees, mtry, ma
       })
       
       # Confusion matrix and performance metrics
-      # convert to factors with the same levels
       all_classes <- sort(union(unique(predicted_classes), unique(ground_truth_labels)))
       predicted_classes <- factor(unlist(predicted_classes), levels = all_classes)
       ground_truth_labels <- factor(ground_truth_labels, levels = all_classes)
       
-      # make a confusion matrix
-      confusion_matrix <- table(predicted_classes, ground_truth_labels)
+      if (length(all_classes) < 2) {
+        print("Only one class present ---- fix here")
+        weighted_f1 <- NA
+      } else {
       
-      # Handling mismatched dimensions
-      all_classes <- sort(union(colnames(confusion_matrix), rownames(confusion_matrix)))
-      conf_matrix_padded <- matrix(0, 
-                                   nrow = length(all_classes), 
-                                   ncol = length(all_classes),
-                                   dimnames = list(all_classes, all_classes))
-      conf_matrix_padded[rownames(confusion_matrix), colnames(confusion_matrix)] <- confusion_matrix
-      
-      # Calculate F1 scores
-      confusion_mtx <- confusionMatrix(conf_matrix_padded)
-      f1 <- confusion_mtx$byClass[, "F1"]
-      support <- rowSums(confusion_mtx$table)  # True instances per class
-      
-      # Compute weighted F1 (rather than the macro which is what I was doing before)
-      weighted_f1 <- weighted.mean(f1, w = support, na.rm = TRUE)
+        # make a confusion matrix
+        confusion_matrix <- table(predicted_classes, ground_truth_labels)
+        
+        # Handling mismatched dimensions
+        all_classes <- sort(union(colnames(confusion_matrix), rownames(confusion_matrix)))
+        conf_matrix_padded <- matrix(0, 
+                                     nrow = length(all_classes), 
+                                     ncol = length(all_classes),
+                                     dimnames = list(all_classes, all_classes))
+        conf_matrix_padded[rownames(confusion_matrix), colnames(confusion_matrix)] <- confusion_matrix
+        
+        # Calculate F1 scores
+        confusion_mtx <- confusionMatrix(conf_matrix_padded)
+        f1 <- confusion_mtx$byClass[, "F1"]
+        support <- rowSums(confusion_mtx$table)  # True instances per class
+        
+        # Compute weighted F1 (rather than the macro which is what I was doing before)
+        weighted_f1 <- weighted.mean(f1, w = support, na.rm = TRUE)
+      }
       
       # Store the F1 score
       f1_scores[[i]] <- weighted_f1

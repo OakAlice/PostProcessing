@@ -23,17 +23,19 @@ data <- lapply(files, function(x){
 })
 
 data <- bind_rows(data)
-data <- data %>% filter(Activity == "Macro-Average")
+data <- data %>% dplyr::filter(Activity == "Macro-Average",
+                               !smoothing_type == "KalmannSmoothing",
+                               !Species == "Sparkes_Koala") # this had an unfair validation protocol
 
 # add levels so its easier to plot later
-data$smoothing_type <- factor(data$smoothing_type, levels = c("NoSmoothing", "ModeSmoothing", "DurationSmoothing", "TransitionSmoothing", "HMMSmoothing", "BayesianSmoothing", "KalmanSmoothing", "LSTMSmoothing"))
+data$smoothing_type <- factor(data$smoothing_type, levels = c("NoSmoothing", "ModeSmoothing", "DurationSmoothing", "TransitionSmoothing", "HMMSmoothing", "BayesianSmoothing", "LSTMSmoothing"))
 
 data$Species <- factor(data$Species, levels = c(unique(data$Species)))
 
 ```
 ```{r}
 # save this
-print(head(data %>% filter(Metric == "F1")))
+#print(head(data %>% dplyr::filter(Metric == "F1")))
 fwrite(data, file.path(base_path, "Output", "collated_performance.csv"))
 ```
 
@@ -42,7 +44,7 @@ Step 2 is to compare these results.
 # its hard to make any one single judgement, so I can make a plot for now
 
 # Plot so that control is more obvious
-df <- data %>% filter(Activity == "Macro-Average", Metric == "F1")
+df <- data %>% dplyr::filter(Activity == "Macro-Average", Metric == "F1")
 ggplot(df, aes(x = Species, y = Score, fill = smoothing_type)) +
   geom_point(
     data = df[df$smoothing_type != "NoSmoothing", ],
@@ -105,7 +107,7 @@ stat_data <- lapply(stat_files, function(x){
   return(data)
 })
 
-stat_data <- bind_rows(stat_data)
+stat_data <- bind_rows(stat_data) %>% select(!c(Behaviours, Individuals, Sample_Rate, Duration))
 head(stat_data)
 ```
 
@@ -119,8 +121,21 @@ full_df <- merge(df, stat_data, by = "Species")
 
 fwrite(full_df, file.path(base_path, "Output", "relative_change_full_df.csv"))
 
+max(full_df$relative_change)
+min(full_df$relative_change)
+
 simple_model <- lmer(relative_change ~ smoothing_type + (1|Species), data = full_df)
 summary(simple_model)
+
+
+# for duration
+max(full_df[full_df$smoothing_type == "DurationSmoothing"]$relative_change)
+mean(full_df[full_df$smoothing_type == "DurationSmoothing"]$relative_change)
+
+max(full_df[full_df$smoothing_type == "BayesianSmoothing"]$relative_change)
+mean(full_df[full_df$smoothing_type == "BayesianSmoothing"]$relative_change)
+
+
 ```
 
 
@@ -147,5 +162,5 @@ anova(model_minimal, model_med, model_full)
 Full model was significantly better, so I will use it.
 
 ```{r}
-summary(model_full)
+summary(model_med)
 ```

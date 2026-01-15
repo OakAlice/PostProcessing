@@ -18,7 +18,7 @@ if (file.exists(file.path(base_path, "Data", species, "Feature_data.csv"))){
   generated_features <- list()
   for (id in unique(data1$ID)){
     data <- data1 %>% 
-      filter(ID == id) %>% 
+      dplyr::filter(ID == id) %>% 
       as.data.table()
     
     feature_data <- processDataPerID(data, 

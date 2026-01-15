@@ -117,23 +117,3 @@ performance <- compute_metrics(as.factor(data$smoothed_class), as.factor(data$tr
 metrics <- performance$metrics
 fwrite(metrics, file.path(base_path, "Output", species, "ConfusionSmoothing_performance.csv"))
 generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, "ConfusionSmoothing_performance.pdf"))
-
-## Calculate ecological results --------------------------------------------
-if (file.exists(file.path(base_path, "Data", species, "Unlabelled_predictions.csv"))){
-  ecological_data <- fread(file.path(base_path, "Data", species, "Unlabelled_predictions.csv"))
-  
-  ecological_data <- applying_confusion_changes(ecological_data, confusion_likelihood, threshold = 0.1)
-  
-  # calculate what this means
-  eco <- ecological_analyses(smoothing_type = "Confusion", 
-                             eco_data = ecological_data, 
-                             target_activity = target_activity)
-  question1 <- eco$sequence_summary
-  question2 <- eco$hour_proportions
-  
-  # write these to files
-  fwrite(question1, file.path(base_path, "Output", species, "ConfusionSmoothing_eco1.csv"))
-  fwrite(question2, file.path(base_path, "Output", species, "ConfusionSmoothing_eco2.csv"))
-} else {
-  print("there is no ecological data for this dataset")
-}

@@ -109,14 +109,14 @@ apply_lstm <- function(val_data, net, window_size, class_levels){
 # in this case we are going to learn from the training data... 
 # to do this, we have to predict the model back onto the training data. 
 # which is problematic in so many ways... but here we go
-other_data <- fread(file.path(base_path, "Data", species, "Training_predictions.csv")) %>%
+other_data <- fread(file.path(base_path, "Data", species, paste0("Training_predictions_", i, ".csv"))) %>%
   group_by(ID, true_class) %>%
   arrange(Time) %>%
   mutate(row = row_number()) %>%
   mutate(split = ifelse(row > 0.8 * max(row), "val", "train"))
 
-train_data <- other_data %>% filter(split == "train")
-val_data <- other_data %>% filter(split == "val")
+train_data <- other_data %>% dplyr::filter(split == "train")
+val_data <- other_data %>% dplyr::filter(split == "val")
 
 ## Hyperparameter tuning ---------------------------------------------------
 results <- list()
@@ -126,8 +126,8 @@ parameters <- expand.grid(window_size = c(3, 5),
                    hidden_size = c(64, 128),
                    epochs = c(10, 20))
 
-for (i in 1:nrow(parameters)){
-  row <- parameters[i, ]
+for (j in 1:nrow(parameters)){
+  row <- parameters[j, ]
   
   class_levels <- levels(factor(train_data$predicted_class))
   net <- train_lstm(train_data, 
@@ -144,14 +144,17 @@ for (i in 1:nrow(parameters)){
   # Recalculate performance and save
   performance <- compute_metrics(as.factor(smoothed_data$smoothed_class), as.factor(smoothed_data$true_class))
     
+  colnames(performance$metrics) <- c("Activity", "Precision", "Recall", "F1", "Accuracy", "Prevelance") # hardcoding this because I was getting issues with column names 
+  
   F1 <- performance$metrics$F1[performance$metrics$Activity == "Macro-Average"] ## changing this between behaviour and activity
   
+  # if this line errors its probably because the activity column has been set to Behaviour somehow... 
   result <- cbind(row, F1)
-  results[[i]] <- result
+  results[[j]] <- result
   
   preds <- smoothed_data %>% dplyr::select(Time, ID, true_class, predicted_class, smoothed_class)
     
-  smoothed_predictions[[i]] <- preds
+  smoothed_predictions[[j]] <- preds
 }
 
 ## Find the best parameters -----------------------------------------------
@@ -160,10 +163,10 @@ best_index <- which.max(results$F1)
 best_parameters <- results[best_index, ]
 
 ## The final build --------------------------------------------------------
-train_data <- fread(file.path(base_path, "Data", species, "Training_predictions.csv")) %>%
+train_data <- fread(file.path(base_path, "Data", species, paste0("Training_predictions_", i, ".csv"))) %>%
   na.omit() %>%
   arrange(ID, Time)
-test_data <- fread(file.path(base_path, "Data", species, "Original_predictions.csv")) %>%
+test_data <- fread(file.path(base_path, "Data", species, paste0("Original_predictions_", i, ".csv"))) %>%
   na.omit() %>%
   arrange(ID, Time)
 
@@ -182,33 +185,10 @@ smoothed_data <- apply_lstm(test_data,
 performance <- compute_metrics(as.factor(smoothed_data$smoothed_class), as.factor(smoothed_data$true_class))
 metrics <- performance$metrics
 
-fwrite(metrics, file.path(base_path, "Output", species, "LSTMSmoothing_performance.csv"))
+fwrite(metrics, file.path(base_path, "Output", species, paste0("LSTMSmoothing_performance_", i, ".csv")))
 generate_confusion_plot(performance$conf_matrix_padded,
-                        save_path = file.path(base_path, "Output", species, "LSTMSmoothing_performance.pdf"))
+                        save_path = file.path(base_path, "Output", species, paste0("LSTMSmoothing_performance_", i, ".pdf")))
 
-# Calculate ecological results --------------------------------------------
-if (file.exists(file.path(base_path, "Data", species, "Unlabelled_predictions.csv"))){
-  
-  ecological_data <- fread(file.path(base_path, "Data", species, "Unlabelled_predictions.csv"))
-  
-  smoothed_ecological_data <- apply_lstm(ecological_data, 
-                              net, 
-                              window_size = best_parameters$window_size, 
-                              class_levels)
-  
-  # calculate what this means
-  eco <- ecological_analyses(smoothing_type = "LSTM", 
-                             eco_data = smoothed_ecological_data, 
-                             target_activity = target_activity)
-  question1 <- eco$sequence_summary
-  question2 <- eco$hour_proportions
-  
-  # write these to files
-  fwrite(question1, file.path(base_path, "Output", species, "LSTMSmoothing_eco1.csv"))
-  fwrite(question2, file.path(base_path, "Output", species, "LSTMSmoothing_eco2.csv"))
-} else {
-  print("there is no ecological data for this dataset")
-}
 
 # Notes -------------------------------------------------------------------
 # alternative emthod would be to use the much more popular keras

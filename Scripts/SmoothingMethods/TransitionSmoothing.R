@@ -91,9 +91,9 @@ train_data <- train_data %>%
 transitions <- na.omit(train_data[, c("true_class", "next_state")])
 
 # probability of each of these transitions
-for (i in seq_len(nrow(transitions))) {
-  from <- as.character(transitions$true_class[i])
-  to <- as.character(transitions$next_state[i])
+for (j in seq_len(nrow(transitions))) {
+  from <- as.character(transitions$true_class[j])
+  to <- as.character(transitions$next_state[j])
   transition_counts[from, to] <- transition_counts[from, to] + 1
 }
 
@@ -107,7 +107,7 @@ transition_probs_melted <- transition_probs %>%
 
 # I can then use these percentages to assess the validity of the transitions we see in the predictions
 ## Find all transitions in the predictions data ---------------------------
-test_data <- fread(file.path(base_path, "Data", species, "Original_predictions.csv"))
+test_data <- fread(file.path(base_path, "Data", species, paste0("Original_predictions_", i, ".csv")))
 
 test_data <- find_suspect_transitions(test_data, transition_probs_melted, x = 10)
 
@@ -119,27 +119,5 @@ test_data <- update_suspect_transitions(test_data)
 ## Recalculate performance and save ----------------------------------------
 performance <- compute_metrics(as.factor(test_data$smoothed_class), as.factor(test_data$true_class))
 metrics <- performance$metrics
-fwrite(metrics, file.path(base_path, "Output", species, "TransitionSmoothing_performance.csv"))
-generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, "TransitionSmoothing_performance.pdf"))
-
-# Calculate ecological results --------------------------------------------
-if (file.exists(file.path(base_path, "Data", species, "Unlabelled_predictions.csv"))){
-  
-  ecological_data <- fread(file.path(base_path, "Data", species, "Unlabelled_predictions.csv"))
-  ecological_data <- find_suspect_transitions(ecological_data, transition_probs_melted, x = 10, threshold = 0.3)
-  ecological_data <- update_suspect_transitions(ecological_data)
-  
-  # calculate what this means
-  eco <- ecological_analyses(smoothing_type = "Transition", 
-                             eco_data = ecological_data, 
-                             target_activity = target_activity)
-  question1 <- eco$sequence_summary
-  question2 <- eco$hour_proportions
-  
-  # write these to files
-  fwrite(question1, file.path(base_path, "Output", species, "TransitionSmoothing_eco1.csv"))
-  fwrite(question2, file.path(base_path, "Output", species, "TransitionSmoothing_eco2.csv"))
-
-} else {
-  print("there is no ecological data for this dataset")
-}
+fwrite(metrics, file.path(base_path, "Output", species, paste0("TransitionSmoothing_performance_", i, ".csv")))
+generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, paste0("TransitionSmoothing_performance_", i, ".pdf")))
