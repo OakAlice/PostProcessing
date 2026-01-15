@@ -179,7 +179,13 @@ RFModelOptimisation <- function(feature_data, data_split, number_trees, mtry, ma
         
         # Calculate F1 scores
         confusion_mtx <- confusionMatrix(conf_matrix_padded)
-        f1 <- confusion_mtx$byClass[, "F1"]
+        tryCatch({
+          f1 <- confusion_mtx$byClass[, "F1"]
+          }, error = function(e) {
+            message("error in extracting the F1: ", e$message)
+            flush.console()
+            f1 <- NA
+          })
         support <- rowSums(confusion_mtx$table)  # True instances per class
         
         # Compute weighted F1 (rather than the macro which is what I was doing before)

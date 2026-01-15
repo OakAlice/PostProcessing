@@ -45,56 +45,53 @@ Step 2 is to compare these results.
 
 # Plot so that control is more obvious
 df <- data %>% dplyr::filter(Activity == "Macro-Average", Metric == "F1")
-ggplot(df, aes(x = Species, y = Score, fill = smoothing_type)) +
-  geom_point(
-    data = df[df$smoothing_type != "NoSmoothing", ],
-    aes(x = Species, y = Score, fill = smoothing_type),
-    shape = 21,
-    colour = "white",
-    size = 3
-  ) +
-  geom_point(
-    data = df[df$smoothing_type == "NoSmoothing", ],
-    aes(x = Species, y = Score),
-    shape = 8,
-    colour = "black",
-    size = 3
-  ) +
+ggplot(df, aes(x = smoothing_type, y = Score, fill = smoothing_type)) +
+  geom_boxplot() +
   my_theme() +
   scale_fill_manual(values = my_colours) +
   labs(x = "Activity", y = "Score", fill = "Smoothing Type") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~Species)
 
 
 # and also do it as relative from the control
 setDT(df)
 
 # Get NoSmoothing scores by Species
-baseline <- df[smoothing_type == "NoSmoothing", .(Species, baseline = Score)]
-df <- merge(df, baseline, by = "Species", all.x = TRUE)
-# Calculate relative change from NoSmoothing
+df[, rep_id := seq_len(.N), by = .(Species, smoothing_type)]
+baseline <- df[
+  smoothing_type == "NoSmoothing",
+  .(Species, rep_id, baseline = Score)
+]
+df <- merge(
+  df,
+  baseline,
+  by = c("Species", "rep_id"),
+  all.x = TRUE
+)
 df[, relative_change := Score - baseline]
 
 # now plot that
-ggplot(df, aes(x = Species, y = relative_change, fill = smoothing_type)) +
-  geom_point(
-    data = df[df$smoothing_type != "NoSmoothing", ],
-    aes(x = Species, y = relative_change, fill = smoothing_type),
-    shape = 21,
-    colour = "white",
-    size = 3
-  ) +
-  geom_point(
-    data = df[df$smoothing_type == "NoSmoothing", ],
-    aes(x = Species, y = relative_change),
-    shape = 8,
-    colour = "black",
-    size = 3
-  ) +
+ggplot(df, aes(x = smoothing_type, y = relative_change, fill = smoothing_type)) +
+  geom_boxplot() +
   my_theme() +
   scale_fill_manual(values = my_colours) +
-  labs(x = "Activity", y = "Relative change to F1 Score", fill = "Smoothing Type") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  labs(x = "Smoothing Type", y = "Relative change to F1 Score") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~Species) +
+  theme(legend.position = "none")
+
+# look at the stats for that
+
+simple_model <- lmer(relative_change ~ smoothing_type + (1|Species), data = df)
+summary(simple_model)
+
+
+
+summary(lmer(relative_change ~ smoothing_type + (1 | Species), data = df))
+
+
+
 ```
 
 Step 3 is to correlate this with the sequential stats I was able to draw out in the sequence report on the training data.

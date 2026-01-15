@@ -73,7 +73,26 @@ train_lstm <- function(train_data, class_levels, epochs, window_size, hidden_siz
       
       optimizer$zero_grad()
       output <- net(x_batch)
-      loss <- loss_fn(output, y_batch)
+      
+      # this was giving me errors with NAs once in a while
+      # couldn't figure out why it was randomly NAing non-reproducibly
+      # this is just a workaround to get through the bulk of
+      
+      loss <- tryCatch(
+        {
+          l <- loss_fn(output, y_batch)
+          if (torch_any(torch_isnan(l)) || torch_any(torch_isinf(l))) {
+            stop("Invalid loss")
+          }
+          l
+        },
+        error = function(e) NULL
+      )
+      
+      if (is.null(loss)) {
+        next  # skip this batch
+      }
+      
       loss$backward()
       optimizer$step()
       
@@ -109,6 +128,17 @@ apply_lstm <- function(val_data, net, window_size, class_levels){
 # in this case we are going to learn from the training data... 
 # to do this, we have to predict the model back onto the training data. 
 # which is problematic in so many ways... but here we go
+
+
+# only do this if its been a while
+
+if (
+  !file.exists(file.path(base_path, "Output", species, paste0("LSTMSmoothing_performance_", i, ".csv"))) ||
+  difftime(Sys.time(), file.info(file.path(base_path, "Output", species, paste0("LSTMSmoothing_performance_", i, ".csv")))$mtime, units = "hours") > hours_since_creation
+) {
+
+
+
 other_data <- fread(file.path(base_path, "Data", species, paste0("Training_predictions_", i, ".csv"))) %>%
   group_by(ID, true_class) %>%
   arrange(Time) %>%
@@ -189,6 +219,9 @@ fwrite(metrics, file.path(base_path, "Output", species, paste0("LSTMSmoothing_pe
 generate_confusion_plot(performance$conf_matrix_padded,
                         save_path = file.path(base_path, "Output", species, paste0("LSTMSmoothing_performance_", i, ".pdf")))
 
+} else {
+  print("already did this one recently")
+}
 
 # Notes -------------------------------------------------------------------
 # alternative emthod would be to use the much more popular keras

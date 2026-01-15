@@ -73,62 +73,62 @@ for (species in all_species){
   data <- fread(file.path(base_path, "Data", species, "Feature_data.csv"))
   unique_IDs <- unique(data$ID)
   ID_groups <- data.frame(
-    ID = unique_IDs,
-    group = sample(rep(1:3, length.out = length(unique_IDs)))
+   ID = unique_IDs,
+   group = sample(rep(1:3, length.out = length(unique_IDs)))
   )
-  
+
   for (i in 1:3){
-    print(i)
-    # define the test IDs for this round
-    test_IDs <- ID_groups$ID[ID_groups$group == i]
-      
-    # Make the Model ----------------------------------------------------------
-    # tune, train, and test a model and generate predictions on the test data
-    source(file = file.path(base_path, "Scripts", "ModelBuilding", "BuildModel.R"))
-    
-    # Compare the smoothing options -------------------------------------------
-    # Make the directory ------------------------------------------------------
-    if (!dir.exists(file.path(base_path, "Output", species))){
-      dir.create(file.path(base_path, "Output", species))
-    }
-    
-    # No Smoothing ------------------------------------------------------------
-    # assess performance and base stats of the raw predictions
-    source(file = file.path(base_path, "Scripts", "SmoothingMethods", "NoSmoothing.R"))
-    
-    # Basic Temporal Smoothing ------------------------------------------------
-    # doing the most basic mode-based smoothing
-    source(file = file.path(base_path, "Scripts", "SmoothingMethods", "ModeSmoothing.R"))
-    
-    # Duration Smoothing ------------------------------------------------------
-    # removing too-short instances based on the 95th percentile durations
-    source(file = file.path(base_path, "Scripts", "SmoothingMethods", "DurationSmoothing.R"))
-    
-    # Transition Smoothing ----------------------------------------------------
-    # removing improbable behavioural transitions
-    source(file = file.path(base_path, "Scripts", "SmoothingMethods", "TransitionSmoothing.R"))
-    
-    # HMM Smoothing -----------------------------------------------------------
-    # using secondary Hidden Markov Model to smooth 
-    source(file = file.path(base_path, "Scripts", "SmoothingMethods", "HMMSmoothing.R"))
-    
-    # Bayesian Smoothing ------------------------------------------------------
-    # Bayes rules to smooth transitions
-    source(file = file.path(base_path, "Scripts", "SmoothingMethods", "BayesianSmoothing.R"))
-    
-    # LSTM Smoothing ----------------------------------------------------------
-    # Using a basic neural network to learn the natural sequences of behaviour
-    source(file = file.path(base_path, "Scripts", "SmoothingMethods", "LSTMSmoothing.R"))
-    
-  }
+   print(i)
+   # define the test IDs for this round
+   test_IDs <- ID_groups$ID[ID_groups$group == i]
   
+      # Make the Model ----------------------------------------------------------
+   # tune, train, and test a model and generate predictions on the test data
+   source(file = file.path(base_path, "Scripts", "ModelBuilding", "BuildModel.R"))
+  
+   # Compare the smoothing options -------------------------------------------
+   # Make the directory ------------------------------------------------------
+   if (!dir.exists(file.path(base_path, "Output", species))){
+     dir.create(file.path(base_path, "Output", species))
+   }
+  
+   # No Smoothing ------------------------------------------------------------
+   # assess performance and base stats of the raw predictions
+   source(file = file.path(base_path, "Scripts", "SmoothingMethods", "NoSmoothing.R"))
+  
+   # Basic Temporal Smoothing ------------------------------------------------
+   # doing the most basic mode-based smoothing
+   source(file = file.path(base_path, "Scripts", "SmoothingMethods", "ModeSmoothing.R"))
+  
+   # Duration Smoothing ------------------------------------------------------
+   # removing too-short instances based on the 95th percentile durations
+   source(file = file.path(base_path, "Scripts", "SmoothingMethods", "DurationSmoothing.R"))
+  
+   # Transition Smoothing ----------------------------------------------------
+   # removing improbable behavioural transitions
+   source(file = file.path(base_path, "Scripts", "SmoothingMethods", "TransitionSmoothing.R"))
+  
+   # HMM Smoothing -----------------------------------------------------------
+   # using secondary Hidden Markov Model to smooth
+   source(file = file.path(base_path, "Scripts", "SmoothingMethods", "HMMSmoothing.R"))
+  
+   # Bayesian Smoothing ------------------------------------------------------
+   # Bayes rules to smooth transitions
+   source(file = file.path(base_path, "Scripts", "SmoothingMethods", "BayesianSmoothing.R"))
+  
+   # LSTM Smoothing ----------------------------------------------------------
+   # Using a basic neural network to learn the natural sequences of behaviour
+   source(file = file.path(base_path, "Scripts", "SmoothingMethods", "LSTMSmoothing.R"))
+  
+  }
+
   
   # Comparing Smoothing Performances ----------------------------------------
   # this will pull out all the metrics tests and build a report for rapid comparison
   # will also compare the ecological results from each of them
   
   
-  # TODO: source(file = file.path(base_path, "Scripts", "Comparisons", "ComparingSmoothing.R"))
+  source(file = file.path(base_path, "Scripts", "Comparisons", "ComparingSmoothing.R"))
 
 }
 
