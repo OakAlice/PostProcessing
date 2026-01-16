@@ -9,8 +9,8 @@ if (file.exists(file.path(base_path, "Data", species, "Formatted_raw_data.csv"))
   print("data already formatted")
 } else {
     
-  accel <- fread(file.path(base_path, "Data", species, "PolarBear_archival_logger_data_southernBeaufortSea_2014_2016_revised.csv"))
-  behs <- fread(file.path(base_path, "Data", species, "PolarBear_video-derived_behaviors_southernBeaufortSea_2014_2016_revised.csv"))
+  accel <- fread(file.path(base_path, "Data", species, "raw", "PolarBear_archival_logger_data_southernBeaufortSea_2014_2016_revised.csv"))
+  behs <- fread(file.path(base_path, "Data", species,"raw", "PolarBear_video-derived_behaviors_southernBeaufortSea_2014_2016_revised.csv"))
   
   # theyre big, so going to use table instead of frame conventions
   setDT(behs)
@@ -42,19 +42,17 @@ if (file.exists(file.path(base_path, "Data", species, "Formatted_raw_data.csv"))
            Z = Int_aZ,
            ID = Bear,
            Activity = Behavior) %>%
-    select(ID, Time, Activity, X, Y, Z)
+    select(ID, Time, Activity, X, Y, Z) %>%
+    filter(!Activity == "unknown")
+  
+  # subset to a reasonable volume of data
+  formatted_accel_beh2 <- fomatted_accel_beh %>%
+    group_by(ID, Activity) %>%
+    arrange(Time) %>%
+    slice(1:10000) %>%
+    ungroup() %>%
+    arrange(ID, Time)
   
   # save that
-  fwrite(fomatted_accel_beh, file.path(base_path, "Data", species, "Formatted_raw_data.csv"))
-  
-  # and save the remainder unlabelled data too
-  accel_unlabelled <- accel[!accel_beh, on = .(Bear, Datetime)]
-  accel_unlabelled <- accel_unlabelled %>%
-    rename(Time = Datetime,
-           X = Int_aX,
-           Y = Int_aY,
-           Z = Int_aZ,
-           ID = Bear) %>%
-    select(!Wetdry)
-  fwrite(accel_unlabelled, file.path(base_path, "Data", species, "Formatted_unlabelled_data.csv"))
+  fwrite(formatted_accel_beh2, file.path(base_path, "Data", species, "Formatted_raw_data.csv"))
 } 

@@ -35,6 +35,9 @@ RFModelOptimisation <- function(feature_data, data_split, number_trees, mtry, ma
       select(c(!!!syms(clean_cols), "Activity", "ID", "Time")) %>% 
       na.omit()
     
+    message(paste0("mtry: ", mtry))
+    message(paste0("number of columns: ", length(clean_cols)))
+            
     if (mtry > length(clean_cols)-1){
       print("mtry too big, making max clean cols")
       mtry <- length(clean_cols)
@@ -47,43 +50,9 @@ RFModelOptimisation <- function(feature_data, data_split, number_trees, mtry, ma
       message(i)
       flush.console()
       
-      if (data_split == "chronological"){
-        tryCatch({
-          #Create training and validation data, split chronologically 
-          split_feature_data <- clean_feature_data %>%
-            group_by(ID, Activity) %>%
-            arrange(ID, Activity, row_number()) %>%  # Ensure consistent ordering within groups
-            mutate(
-              row_idx = row_number(),         # Get row index within each group
-              total_rows = n()                # Total rows per group
-            ) %>%
-            mutate(
-              is_test = row_idx > floor(0.8 * total_rows) # Define test rows (20%)
-            ) %>%
-            ungroup()
-  
-          # Separate into training and testing
-          training_data <- split_feature_data %>%
-            filter(!is_test) %>%
-            select(-c(row_idx, total_rows, is_test, ID, Time))
-          training_data$Activity <- as.factor(training_data$Activity)
-          
-          validation_data <- split_feature_data %>%
-            filter(is_test) %>%
-            select(-row_idx, -total_rows, -is_test, -ID, -Time)
-   
-          message("data split")
-          flush.console()
-          
-        }, error = function(e) {
-          message("Error in data splitting: ", e$message)
-        })
-        
-      } else { # based on individual
-        
         tryCatch({
           #Create training and validation data, split by ID
-          test_IDs <- sample(unique(clean_feature_data$ID), 0.3*length(unique(clean_feature_data$ID)))
+          test_IDs <- sample(unique(clean_feature_data$ID), ceiling(0.3*length(unique(clean_feature_data$ID))))
           
           validation_data <- clean_feature_data %>% dplyr::filter(ID %in% test_IDs)
           training_data <- clean_feature_data %>% dplyr::filter(!ID %in% test_IDs)                      
@@ -103,7 +72,6 @@ RFModelOptimisation <- function(feature_data, data_split, number_trees, mtry, ma
         }, error = function(e) {
           message("Error in data splitting: ", e$message)
         })
-      }
       
       # Train RF model
       tryCatch({
@@ -120,6 +88,7 @@ RFModelOptimisation <- function(feature_data, data_split, number_trees, mtry, ma
           num.trees = number_trees,
           mtry = mtry,
           max.depth = max_depth,
+          sample.fraction = 1, # select all the data (small datasets will fail otherwise)
           classification = TRUE,
           importance = "impurity",
           case.weights = weight

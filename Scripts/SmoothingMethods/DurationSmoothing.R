@@ -78,6 +78,6 @@ test_data <- smooth_durations(test_data, train_summary)
 performance <- compute_metrics(as.factor(test_data$smoothed_class), as.factor(test_data$true_class))
 metrics <- performance$metrics
 fwrite(metrics, file.path(base_path, "Output", species, paste0("DurationSmoothing_performance_", i, ".csv")))
-generate_confusion_plot(performance$conf_matrix_padded,
-                        save_path = file.path(base_path, "Output", species, paste0("DurationSmoothing_performance_", i, ".pdf")))
+#generate_confusion_plot(performance$conf_matrix_padded,
+#                        save_path = file.path(base_path, "Output", species, paste0("DurationSmoothing_performance_", i, ".pdf")))
 

@@ -1,7 +1,7 @@
 # Main Script -------------------------------------------------------------
 
-# base_path <- "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
-base_path <- "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
+base_path <- "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
+# base_path <- "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
 
 #install.packaged("pacman")
 library(pacman)
@@ -20,7 +20,9 @@ p_load(tidyverse,
        lubridate,
        effsize,
        lme4,
-       lmerTest)
+       lmerTest,
+       rBayesianOptimization,
+       ranger)
 
 # for parallel processing
 library(future)
@@ -39,10 +41,15 @@ sample_rates <- list(Galea_Cat = 50,
                      Maekawa_Gull = 25,
                      Smit_Cat = 30,
                      Studd_Squirrel = 1,
+                     Desantis_Rattlesnake = 1, 
                      Vehkaoja_Dog = 100,
                      Yu_Duck = 25,
                      HarveyCaroll_Pangolin = 50,
-                     Mauny_Goat = 5)
+                     Pagano_Bear = 16,
+                     Sparkes_Koala = 50,
+                     Mauny_Goat = 5,
+                     Clemente_Echidna = 10
+                     )
 
 # Functions ---------------------------------------------------------------
 source(file = file.path(base_path, "Scripts", "DataFormatting", "GenerateFeatures_Functions.R"))
@@ -58,8 +65,9 @@ source(file = file.path(base_path, "Scripts", "PlottingFunctions.R"))
 # collecting the data from various sources and formatting it to standardised structure
 
 for (species in all_species){ 
-  
+ 
   print(species)
+  species <- basename(species)
   
   source(file = file.path(base_path, "Scripts", "DataFormatting", paste0(species, "_Formatting.R")))
   source(file = file.path(base_path, "Scripts", "DataFormatting", "GenerateFeatures.R"))

@@ -9,10 +9,10 @@ if (
 ) {
   
 # Split out test data -----------------------------------------------------
-data <- fread(file.path(base_path, "Data", species, "Feature_data.csv"))
+data <- fread(file = file.path(base_path, "Data", species, "Feature_data.csv"))
 
 test_data <- data %>% dplyr::filter(ID %in% test_IDs)
-other_data <- data %>% dplyr::filter(!ID %in% test_IDs)                      
+other_data <- data %>% dplyr::filter(!ID %in% test_IDs)                     
 
 # Model design: hyperparameter tuning -------------------------------------
 # Based on a random forest, what hyperparamaters are best?

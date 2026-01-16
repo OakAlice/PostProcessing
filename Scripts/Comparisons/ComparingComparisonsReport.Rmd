@@ -32,8 +32,6 @@ data$smoothing_type <- factor(data$smoothing_type, levels = c("NoSmoothing", "Mo
 
 data$Species <- factor(data$Species, levels = c(unique(data$Species)))
 
-```
-```{r}
 # save this
 #print(head(data %>% dplyr::filter(Metric == "F1")))
 fwrite(data, file.path(base_path, "Output", "collated_performance.csv"))
@@ -78,19 +76,12 @@ ggplot(df, aes(x = smoothing_type, y = relative_change, fill = smoothing_type)) 
   scale_fill_manual(values = my_colours) +
   labs(x = "Smoothing Type", y = "Relative change to F1 Score") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  facet_wrap(~Species) +
+  facet_wrap(~Species, nrow = 2) +
   theme(legend.position = "none")
 
 # look at the stats for that
-
 simple_model <- lmer(relative_change ~ smoothing_type + (1|Species), data = df)
 summary(simple_model)
-
-
-
-summary(lmer(relative_change ~ smoothing_type + (1 | Species), data = df))
-
-
 
 ```
 

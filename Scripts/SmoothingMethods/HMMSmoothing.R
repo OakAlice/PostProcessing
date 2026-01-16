@@ -66,4 +66,4 @@ test_data$smoothed_class <- viterbi(hmm_model, as.factor(test_data$predicted_cla
 performance <- compute_metrics(as.factor(test_data$smoothed_class), as.factor(test_data$true_class))
 metrics <- performance$metrics
 fwrite(metrics, file.path(base_path, "Output", species, paste0("HMMSmoothing_performance_", i, ".csv")))
-generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, paste0("HMMSmoothing_performance_", i, ".pdf")))
+# generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, paste0("HMMSmoothing_performance_", i, ".pdf")))

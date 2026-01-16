@@ -73,4 +73,4 @@ test_data <- apply_bayes_smoothing(test_data, states, transition_matrix)
 performance <- compute_metrics(as.factor(test_data$smoothed_class), as.factor(test_data$true_class))
 metrics <- performance$metrics
 fwrite(metrics, file.path(base_path, "Output", species, paste0("BayesianSmoothing_performance_", i, ".csv")))
-generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, paste0("BayesianSmoothing_performance_", i, ".pdf")))
+# generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, paste0("BayesianSmoothing_performance_", i, ".pdf")))
