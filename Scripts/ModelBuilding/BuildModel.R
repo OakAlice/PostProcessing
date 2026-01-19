@@ -1,7 +1,7 @@
 # Master script for building the models for any given species etc ---------
 
 source(file = file.path(base_path, "Scripts", "ModelBuilding", "HPOFunctions.R"))
-source(file = file.path(base_path, "Scripts", "ModelBuilding", "TestFunctions.R"))
+source(file = file.path(base_path, "Scripts", "PerformanceTestingFunctions.R"))
 
 if (
   !file.exists(file.path(base_path, "Data", species, paste0("Training_predictions_", i, ".csv"))) ||
@@ -17,7 +17,7 @@ other_data <- data %>% dplyr::filter(!ID %in% test_IDs)
 # Model design: hyperparameter tuning -------------------------------------
 # Based on a random forest, what hyperparamaters are best?
   bounds <- list(
-    mtry = c(2, 50),
+    mtry = c(2, 20),
     max_depth = c(5, 30),
     number_trees = c(100, 1000)
   )
@@ -27,7 +27,6 @@ other_data <- data %>% dplyr::filter(!ID %in% test_IDs)
     FUN = function(number_trees, mtry, max_depth) {
       RFModelOptimisation(
         feature_data = other_data,
-        data_split = "individual",
         number_trees = number_trees,
         mtry = mtry,
         max_depth = max_depth

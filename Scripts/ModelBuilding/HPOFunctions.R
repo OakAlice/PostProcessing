@@ -23,7 +23,7 @@ removeBadFeatures <- function(feature_data, var_threshold, corr_threshold) {
 }
 
 # main call that splits data, generates function, and validates
-RFModelOptimisation <- function(feature_data, data_split, number_trees, mtry, max_depth){
+RFModelOptimisation <- function(feature_data, number_trees, mtry, max_depth){
   
     # remove bad features
     feature_data <- as.data.table(feature_data)
@@ -34,12 +34,10 @@ RFModelOptimisation <- function(feature_data, data_split, number_trees, mtry, ma
     clean_feature_data <- feature_data %>%
       select(c(!!!syms(clean_cols), "Activity", "ID", "Time")) %>% 
       na.omit()
-    
-    message(paste0("mtry: ", mtry))
-    message(paste0("number of columns: ", length(clean_cols)))
-            
+          
     if (mtry > length(clean_cols)-1){
-      print("mtry too big, making max clean cols")
+      message("mtry too big, making max clean cols")
+      flush.console()
       mtry <- length(clean_cols)
     }
   
@@ -148,25 +146,35 @@ RFModelOptimisation <- function(feature_data, data_split, number_trees, mtry, ma
         
         # Calculate F1 scores
         confusion_mtx <- confusionMatrix(conf_matrix_padded)
-        tryCatch({
-          f1 <- confusion_mtx$byClass[, "F1"]
-          }, error = function(e) {
-            message("error in extracting the F1: ", e$message)
-            flush.console()
-            f1 <- NA
-          })
-        support <- rowSums(confusion_mtx$table)  # True instances per class
+        byClass <- confusion_mtx$byClass
         
-        # Compute weighted F1 (rather than the macro which is what I was doing before)
-        weighted_f1 <- weighted.mean(f1, w = support, na.rm = TRUE)
-      }
+        if (is.matrix(byClass)) {
+          # Compute weighted F1 (rather than the macro which is what I was doing before)
+          
+          f1 <- byClass[, "F1"]
+          support <- rowSums(confusion_mtx$table)  # True instances per class
+          
+          f1[is.nan(f1)] <- 0 # if you leave NAs in, it fails. and if you na.rm() it gets too easy because classes are ommitted
+          f1[is.na(f1)] <- 0
+          weighted_f1 <- weighted.mean(f1, w = support)
+          
+        } else if (is.numeric(byClass) && "F1" %in% names(byClass)) {
+          weighted_f1 <- byClass["F1"]
+        } else {
+          NA
+        }
+        
+       }
       
       # Store the F1 score
       f1_scores[[i]] <- weighted_f1
     }
     
     #### Calculate average F1-scors
-    average_macro_f1 <- mean(unlist(f1_scores), na.rm = TRUE)
+    # same NA problem
+    f1s <- unlist(f1_scores)
+    f1s[is.na(f1s)] <- 0
+    average_macro_f1 <- mean(f1s)
     
     # no preds for this one
     return(list(Score = average_macro_f1, Pred = NA))

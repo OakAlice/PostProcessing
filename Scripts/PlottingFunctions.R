@@ -1,6 +1,5 @@
 # Plotting functions and settings -----------------------------------------
 
-
 # Custom theme ------------------------------------------------------------
 my_theme <- function() {
   theme_minimal(base_size = 12) +
@@ -16,9 +15,19 @@ my_theme <- function() {
 }
 
 # Colours -----------------------------------------------------------------
-fave_colours = c("coral", "aquamarine3", "orchid3", "slateblue2", "goldenrod2", "deepskyblue3", "firebrick3", "lightcoral" , "darkcyan", "tomato", "plum")
-my_colours = c("coral", "aquamarine3", "orchid3", "slateblue2", "goldenrod2", "deepskyblue3", "firebrick3", "lightcoral" , "darkcyan", "tomato")
-names(my_colours) <- c("NoSmoothing", "ModeSmoothing", "DurationSmoothing", 
-                       "ConfusionSmoothing", "TransitionSmoothing", "HMMSmoothing",
-                       "BayesianSmoothing", "KalmanSmoothing", "LSTMSmoothing")
+my_colours = c("grey37",
+               "coral", 
+               "goldenrod2", 
+               "khaki2", 
+               "aquamarine3", 
+               "powderblue", 
+               "plum", 
+               "lightpink1")
+names(my_colours) <- c("No", 
+                       "Mode", 
+                       "Duration", 
+                       "Transition", 
+                       "HMM", 
+                       "Bayesian", 
+                       "LSTM")
 

@@ -9,22 +9,45 @@ make_lstm_input <- function(data, window_size, class_levels) {
   n_classes <- length(class_levels)
   
   if (nrow(data) <= window_size) {
-    warning(sprintf("Not enough observations (%d) for window size (%d)", 
-                    nrow(data), window_size))
+    warning(sprintf(
+      "Not enough observations (%d) for window size (%d)",
+      nrow(data), window_size
+    ))
     return(NULL)
   }
   
-  # have to do -1 so that it is indexed from 0 (necessary for package)
-  encoded <- as.integer(factor(data$predicted_class, levels = class_levels)) - 1
-  y_pred <- diag(n_classes)[encoded + 1, ] # +1 again so its back where it should be
+  # Encode predicted classes (0-based)
+  encoded_pred <- as.integer(
+    factor(data$predicted_class, levels = class_levels)
+  ) - 1L
+  
+  if (anyNA(encoded_pred)) {
+    stop("NA in encoded predicted_class: class not in class_levels")
+  }
+  
+  y_pred <- diag(n_classes)[encoded_pred + 1L, ]
   
   n_obs <- nrow(y_pred)
-  X_array <- array(NA, dim = c(n_obs - window_size, window_size, n_classes))
-  y_target <- as.integer(factor(data$true_class[(window_size + 1):n_obs], 
-                                levels = class_levels))
   
-  for (i in 1:(n_obs - window_size)) {
-    X_array[i, , ] <- y_pred[i:(i + window_size - 1), ]
+  X_array <- array(
+    NA_real_,
+    dim = c(n_obs - window_size, window_size, n_classes)
+  )
+  
+  # Encode true classes (0-based)
+  y_target <- as.integer(
+    factor(
+      data$true_class[(window_size + 1):n_obs],
+      levels = class_levels
+    )
+  ) - 1L
+  
+  if (anyNA(y_target)) {
+    stop("NA in encoded true_class: class not in class_levels")
+  }
+  
+  for (i in seq_len(n_obs - window_size)) {
+    X_array[i, , ] <- y_pred[i:(i + window_size - 1L), ]
   }
   
   list(
@@ -32,6 +55,7 @@ make_lstm_input <- function(data, window_size, class_levels) {
     y = torch_tensor(y_target, dtype = torch_long())
   )
 }
+
 
 # Train the model
 train_lstm <- function(train_data, class_levels, epochs, window_size, hidden_size){
@@ -49,7 +73,7 @@ train_lstm <- function(train_data, class_levels, epochs, window_size, hidden_siz
     },
     forward = function(x) {
       out <- self$lstm(x)[[1]]
-      last_step <- out[ , dim(out)[2], ]
+      last_step <- out[, out$size()[2], ]
       self$output(last_step)
     }
   )
@@ -66,28 +90,28 @@ train_lstm <- function(train_data, class_levels, epochs, window_size, hidden_siz
   
   for (epoch in 1:n_epochs) {
     total_loss <- 0
-    for (i in seq(1, X$size(1), by = batch_size)) {
-      idx <- i:min(i + batch_size - 1, X$size(1))
+    n <- X$size()[1]
+    for (i in seq(1, n, by = batch_size)) {
+      idx <- i:min(i + batch_size - 1, n)
       x_batch <- X[idx, , ]
       y_batch <- y[idx]
       
       optimizer$zero_grad()
       output <- net(x_batch)
       
-      # this was giving me errors with NAs once in a while
-      # couldn't figure out why it was randomly NAing non-reproducibly
-      # this is just a workaround to get through the bulk of
-      
       loss <- tryCatch(
         {
           l <- loss_fn(output, y_batch)
-          if (torch_any(torch_isnan(l)) || torch_any(torch_isinf(l))) {
+          
+          if (!is.finite(l$item())) {
             stop("Invalid loss")
           }
+          
           l
         },
         error = function(e) NULL
       )
+      
       
       if (is.null(loss)) {
         next  # skip this batch
@@ -126,27 +150,18 @@ apply_lstm <- function(val_data, net, window_size, class_levels){
 
 # Code --------------------------------------------------------------------
 # in this case we are going to learn from the training data... 
-# to do this, we have to predict the model back onto the training data. 
-# which is problematic in so many ways... but here we go
-
-
-# only do this if its been a while
+# to do this, we have to predict the model back onto the training data.
 
 if (
   !file.exists(file.path(base_path, "Output", species, paste0("LSTMSmoothing_performance_", i, ".csv"))) ||
   difftime(Sys.time(), file.info(file.path(base_path, "Output", species, paste0("LSTMSmoothing_performance_", i, ".csv")))$mtime, units = "hours") > hours_since_creation
 ) {
+  
+other_data <- fread(file = file.path(base_path, "Data", species, paste0("Training_predictions_", i, ".csv"))) %>%
+  mutate(split = ifelse(ID %in% sample(unique(other_data$ID), 0.8*length(unique(other_data$ID))), "train", "val"))
 
-
-
-other_data <- fread(file.path(base_path, "Data", species, paste0("Training_predictions_", i, ".csv"))) %>%
-  group_by(ID, true_class) %>%
-  arrange(Time) %>%
-  mutate(row = row_number()) %>%
-  mutate(split = ifelse(row > 0.8 * max(row), "val", "train"))
-
-train_data <- other_data %>% dplyr::filter(split == "train")
-val_data <- other_data %>% dplyr::filter(split == "val")
+train_data <- other_data %>% dplyr::filter(split == "train") %>% select(!split)
+val_data <- other_data %>% dplyr::filter(split == "val") %>% select(!split)
 
 ## Hyperparameter tuning ---------------------------------------------------
 results <- list()

@@ -8,6 +8,7 @@ library(pacman)
 
 p_load(tidyverse, 
        data.table,
+       bruceR,
        caret,
        ggplot2,
        HMM,
@@ -28,9 +29,14 @@ p_load(tidyverse,
 library(future)
 library(future.apply)
 
+# Delete all files from one or more conditions ----------------------------
+# old_files <- list.files(file.path(base_path, "Output"), full.names = TRUE, recursive = TRUE)
+# old_files
+# file.remove(old_files)
+
 # Define variables for this run -------------------------------------------
 overlap <- 0 # same for every dataset
-hours_since_creation <- 20 # overwrite model and post-processing files if they were done more than X hrs ago
+hours_since_creation <- 100 # overwrite model and post-processing files if they were done more than X hrs ago
 available_axes <- c("X", "Y", "Z") # annopying variable I haven't gotten rid of yet
 
 all_species <- list.dirs(file.path(base_path, "Data"), recursive = FALSE)
@@ -54,7 +60,6 @@ sample_rates <- list(Galea_Cat = 50,
 # Functions ---------------------------------------------------------------
 source(file = file.path(base_path, "Scripts", "DataFormatting", "GenerateFeatures_Functions.R"))
 source(file = file.path(base_path, "Scripts", "PerformanceTestingFunctions.R"))
-source(file = file.path(base_path, "Scripts", "EcologicalTestingFunctions.R"))
 source(file = file.path(base_path, "Scripts", "PlottingFunctions.R"))
 
 # Dataset Characteristics -------------------------------------------------
@@ -65,17 +70,13 @@ source(file = file.path(base_path, "Scripts", "PlottingFunctions.R"))
 # collecting the data from various sources and formatting it to standardised structure
 
 for (species in all_species){ 
- 
+  
   print(species)
   species <- basename(species)
   
   source(file = file.path(base_path, "Scripts", "DataFormatting", paste0(species, "_Formatting.R")))
   source(file = file.path(base_path, "Scripts", "DataFormatting", "GenerateFeatures.R"))
-  
-  # Sequential data report --------------------------------------------------
-  # how natural is this data? # haven't turned this into a markdown yet
-  # source(file = file.path(base_path, "Scripts", "SequentialReport.R"))
-  
+
   # repeat the entire process 3 times for cross-validation
   # assign IDs to their fold
   data <- fread(file.path(base_path, "Data", species, "Feature_data.csv"))
@@ -126,8 +127,8 @@ for (species in all_species){
   
    # LSTM Smoothing ----------------------------------------------------------
    # Using a basic neural network to learn the natural sequences of behaviour
-   source(file = file.path(base_path, "Scripts", "SmoothingMethods", "LSTMSmoothing.R"))
-  
+   # source(file = file.path(base_path, "Scripts", "SmoothingMethods", "LSTMSmoothing.R"))
+   
   }
 
   
@@ -139,6 +140,10 @@ for (species in all_species){
   source(file = file.path(base_path, "Scripts", "Comparisons", "ComparingSmoothing.R"))
 
 }
+
+# Sequential data report --------------------------------------------------
+# how sequentially collected was all the data?
+source(file = file.path(base_path, "Scripts", "SequentialReport.R"))
 
 # Comparing the comparisons -----------------------------------------------
 source(file = file.path(base_path, "Scripts", "Comparisons", "ComparingComparisons.R"))

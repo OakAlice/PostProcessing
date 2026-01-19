@@ -21,9 +21,11 @@ if (file.exists(file.path(base_path, "Data", species, "Feature_data.csv"))){
       dplyr::filter(ID == id) %>% 
       as.data.table()
     
+    window <- ifelse(sample_rate > 1, 2, 5) # to give it more data to work with 
+    
     feature_data <- processDataPerID(data, 
                                      features_type = c("timeseries", "statistical"), 
-                                     window_length = 2, # to give it more data to work with 
+                                     window_length = window, 
                                      sample_rate = sample_rate, 
                                      overlap_percent = overlap)
     

@@ -1,48 +1,5 @@
 # Function for testing performance ----------------------------------------
 
-
-# Numeric scores ----------------------------------------------------------
-compute_metrics <- function(predicted_classes, true_classes) {
-  # Compute confusion matrix
-  confusion_matrix <- table(predicted_classes, true_classes)
-  all_classes <- union(levels(as.factor(predicted_classes)), levels(as.factor(true_classes)))
-  
-  # Create a padded confusion matrix
-  conf_matrix_padded <- matrix(0, nrow = length(all_classes), ncol = length(all_classes),
-                               dimnames = list(all_classes, all_classes))
-  conf_matrix_padded[rownames(confusion_matrix), colnames(confusion_matrix)] <- confusion_matrix
-  
-  # Calculate F1 score and other metrics using confusionMatrix from caret
-  confusion_mtx <- confusionMatrix(conf_matrix_padded)
-  
-  # Extract precision, recall, F1-score, accuracy, and prevalence
-  metrics <- data.frame(
-    Activity = rownames(confusion_mtx$byClass),  # Behaviour names (classes)
-    Precision = confusion_mtx$byClass[, "Precision"],
-    Recall = confusion_mtx$byClass[, "Recall"],
-    F1 = confusion_mtx$byClass[, "F1"],
-    Accuracy = confusion_mtx$byClass[, "Balanced Accuracy"],
-    Prevelance = confusion_mtx$byClass[, "Prevalence"] * length(predicted_classes)
-  )
-  
-  # Add macro-averaged metrics as the last row
-  metrics <- rbind(
-    metrics,
-    data.frame(
-      Activity = "Macro-Average",
-      Precision = mean(metrics$Precision, na.rm = TRUE),
-      Recall = mean(metrics$Recall, na.rm = TRUE),
-      F1 = mean(metrics$F1, na.rm = TRUE),
-      Accuracy = mean(metrics$Accuracy, na.rm = TRUE),
-      Prevelance = NA
-    )
-  )
-  
-  return(list(metrics = metrics,
-              conf_matrix_padded = conf_matrix_padded))
-}
-
-
 # Plot of confusion matric ------------------------------------------------
 generate_confusion_plot <- function(conf_matrix_padded, save_path) {
   
@@ -73,4 +30,56 @@ generate_confusion_plot <- function(conf_matrix_padded, save_path) {
   # Save the plot to a PDF
   ggsave(save_path,
          plot = confusion_plot, width = 16, height = 8)
+}
+
+# Function to compute confusion matrix metrics
+compute_metrics <- function(predicted_classes, ground_truth_labels) {
+  # Compute confusion matrix
+  confusion_matrix <- table(predicted_classes, ground_truth_labels)
+  all_classes <- union(levels(predicted_classes), levels(ground_truth_labels))
+  
+  # Create a padded confusion matrix
+  conf_matrix_padded <- matrix(0, nrow = length(all_classes), ncol = length(all_classes),
+                               dimnames = list(all_classes, all_classes))
+  conf_matrix_padded[rownames(confusion_matrix), colnames(confusion_matrix)] <- confusion_matrix
+  
+  # Calculate F1 score and other metrics using confusionMatrix from caret
+  confusion_mtx <- confusionMatrix(conf_matrix_padded)
+  
+  byClass <- confusion_mtx$byClass
+  
+  # If binary, convert named vector to 1-row matrix first
+  # fails in the desantis_rattlesnake condition if I dont do this
+  if (is.null(dim(byClass))) {
+    byClass <- t(as.matrix(byClass))
+    rownames(byClass) <- colnames(conf_matrix_padded)[2]  # positive class
+  }
+  
+  metrics <- data.frame(
+    Behaviour  = rownames(byClass),
+    Precision  = byClass[, "Precision"],
+    Recall     = byClass[, "Recall"],
+    F1         = byClass[, "F1"],
+    Accuracy   = byClass[, "Balanced Accuracy"],
+    Prevelance = byClass[, "Prevalence"] * length(predicted_classes),
+    row.names  = NULL
+  )
+  
+  # Add macro-averaged metrics as the last row
+  # do not na.rm = TRUE otherwise the model can cheat and move towards not predicting classes at all
+  metrics[is.na(metrics)] <- 0
+  metrics <- rbind(
+    metrics,
+    data.frame(
+      Behaviour = "Macro-Average",
+      Precision = mean(metrics$Precision),
+      Recall = mean(metrics$Recall),
+      F1 = mean(metrics$F1),
+      Accuracy = mean(metrics$Accuracy),
+      Prevelance = NA
+    )
+  )
+  
+  return(list(metrics = metrics,
+              conf_matrix_padded = conf_matrix_padded))
 }

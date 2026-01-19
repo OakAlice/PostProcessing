@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = FALSE, fig.width = 8, fig.height = 5)
 
 This is the report to compare the comparisons between the species datasets.
 
-Step 1 is to pull together all the data. 
+Step 1 is to pull together all the data from each species. 
 ```{r bind, include = FALSE}
 files <- list.files(file.path(base_path, "Output"), pattern = "all_smoothed_metrics.csv", full.names = TRUE, recursive = TRUE)
 
@@ -23,12 +23,11 @@ data <- lapply(files, function(x){
 })
 
 data <- bind_rows(data)
-data <- data %>% dplyr::filter(Activity == "Macro-Average",
-                               !smoothing_type == "KalmannSmoothing",
-                               !Species == "Sparkes_Koala") # this had an unfair validation protocol
+data <- data %>% dplyr::filter(Activity == "Macro-Average") %>%
+  mutate(smoothing_type = gsub("Smoothing", "", smoothing_type))
 
 # add levels so its easier to plot later
-data$smoothing_type <- factor(data$smoothing_type, levels = c("NoSmoothing", "ModeSmoothing", "DurationSmoothing", "TransitionSmoothing", "HMMSmoothing", "BayesianSmoothing", "LSTMSmoothing"))
+data$smoothing_type <- factor(data$smoothing_type, levels = c("No", "Mode", "Duration", "Transition", "HMM", "Bayesian")) #, "LSTM"))
 
 data$Species <- factor(data$Species, levels = c(unique(data$Species)))
 
@@ -58,7 +57,7 @@ setDT(df)
 # Get NoSmoothing scores by Species
 df[, rep_id := seq_len(.N), by = .(Species, smoothing_type)]
 baseline <- df[
-  smoothing_type == "NoSmoothing",
+  smoothing_type == "No",
   .(Species, rep_id, baseline = Score)
 ]
 df <- merge(
@@ -70,85 +69,121 @@ df <- merge(
 df[, relative_change := Score - baseline]
 
 # now plot that
-ggplot(df, aes(x = smoothing_type, y = relative_change, fill = smoothing_type)) +
-  geom_boxplot() +
+df_sum <- df %>%
+  filter(smoothing_type != "No") %>%
+  group_by(Species, smoothing_type) %>%
+  summarise(
+    mean_rc = mean(relative_change, na.rm = TRUE),
+    se_rc   = sd(relative_change, na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  )
+
+ggplot(df_sum, aes(x = smoothing_type, y = mean_rc, colour = smoothing_type)) +
+  geom_hline(yintercept = 0, linetype = "dotted", colour = "black") +
+  geom_point(size = 2.5) +
+  geom_errorbar(
+    aes(ymin = mean_rc - se_rc, ymax = mean_rc + se_rc),
+    width = 0.2
+  ) +
   my_theme() +
-  scale_fill_manual(values = my_colours) +
+  scale_colour_manual(values = my_colours) +
   labs(x = "Smoothing Type", y = "Relative change to F1 Score") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  facet_wrap(~Species, nrow = 2) +
+  facet_wrap(~Species, ncol = 5) +
   theme(legend.position = "none")
 
-# look at the stats for that
-simple_model <- lmer(relative_change ~ smoothing_type + (1|Species), data = df)
-summary(simple_model)
-
 ```
 
-Step 3 is to correlate this with the sequential stats I was able to draw out in the sequence report on the training data.
-
-```{r extracting stat data}
-stat_files <- list.files(file.path(base_path, "Output"), pattern = "Sequence_stats.csv", full.names = TRUE, recursive = TRUE)
-
-stat_data <- lapply(stat_files, function(x){
-  data <- fread(x)
-  return(data)
-})
-
-stat_data <- bind_rows(stat_data) %>% select(!c(Behaviours, Individuals, Sample_Rate, Duration))
-head(stat_data)
-```
-
-Of these stats, the ones I think will be most predictive are Prop_Transitions (which represents how many of the training sequences contained transitions) and Transition_Rate (which is how quickly the behaviours turnover within those sequences).
-
-Firstly I just look att the change to relative performance.
+Look at the stats for that. Begin with very general summaries and descriptions.
 
 ```{r}
 # add the 2 information sources together
-full_df <- merge(df, stat_data, by = "Species")
+print("best change")
+max(df$relative_change)
+print("worst change")
+min(df$relative_change)
 
-fwrite(full_df, file.path(base_path, "Output", "relative_change_full_df.csv"))
-
-max(full_df$relative_change)
-min(full_df$relative_change)
-
-simple_model <- lmer(relative_change ~ smoothing_type + (1|Species), data = full_df)
-summary(simple_model)
-
-
-# for duration
-max(full_df[full_df$smoothing_type == "DurationSmoothing"]$relative_change)
-mean(full_df[full_df$smoothing_type == "DurationSmoothing"]$relative_change)
-
-max(full_df[full_df$smoothing_type == "BayesianSmoothing"]$relative_change)
-mean(full_df[full_df$smoothing_type == "BayesianSmoothing"]$relative_change)
-
+# mean changes
+summaries <- df %>%
+  group_by(Species, smoothing_type) %>%
+  summarise(meanF1 = mean(Score),
+            meanChange = mean(relative_change)) %>%
+  arrange(desc(meanChange))
+summaries
 
 ```
 
+Within species
+```{r}
+# per species
+species <- unique(df$Species)
+all_stats <- data.frame()
+for (x in species){
+  dat <- df %>% dplyr::filter(Species == x)
+  dat$smoothing_type <- relevel(dat$smoothing_type, ref = "No")
+  mod <- lmer(
+    relative_change ~ 0 + smoothing_type + (1 | rep_id),
+    data = dat
+  )
 
+  stats <- as.data.frame(summary(mod)$coefficients)
+  stats$Species <- x
+  stats$sig <- ifelse(stats$`Pr(>|t|)` < 0.05, TRUE, FALSE)
+  stats$smoothing_type <- gsub("smoothing_type", "", rownames(stats))
+  
+  all_stats <- rbind(all_stats, stats)
+}
 
-Then I look at the effect of transitions in the data and test whether there were interaction effects by doing an anova comparing the predictive performance of the model with and without the interactions.
+fwrite(all_stats, file.path(base_path, "Output", "WithinSpeciesStats.csv"))
+
+sig_stats <- all_stats %>% dplyr::filter(sig == TRUE)
+sig_stats
+```
+
+Across species
+```{r}
+# all species
+simple_model <- lmer(relative_change ~ smoothing_type + (1|Species/rep_id), data = df)
+summary(simple_model)
+```
+
+Step 3 is to correlate this with the sequential stats I was able to draw out in the sequence report on the training data. Why are some datasets positively affected while others aren't?
+
+```{r extracting stat data}
+stat_file <- fread(file.path(base_path, "Output", "All_sequence_stats.csv"))
+
+full_df <- merge(df, stat_file, by = "Species")
+```
 
 ```{r some stats}
 
-# model_minimum <- lm(relative_change ~ smoothing_type + Transition_Rate + Prop_Transitions + Species, data = full_df)
+full_model <- lmer(
+  relative_change ~ smoothing_type * Transition_Rate * Prop_Transitions * Num_Activities +
+    (1 | Species / rep_id),
+  data = full_df, REML = FALSE
+)
+#summary(full_model)
 
-model_minimal <- lmer(relative_change ~ smoothing_type + Transition_Rate +
-                   (1|Species), data = full_df, REML = FALSE)
+simple_model <- lmer(
+  relative_change ~ smoothing_type * Transition_Rate * Num_Activities +
+    smoothing_type * Prop_Transitions * Num_Activities +
+    (1 | Species / rep_id),
+  data = full_df, REML = FALSE
+)
+#summary(simple_model)
 
-model_med <- lmer(relative_change ~ smoothing_type + Transition_Rate + 
-                   smoothing_type:Transition_Rate +
-                   (1|Species), data = full_df, REML = FALSE)
+very_simple_model <- lmer(
+  relative_change ~ smoothing_type +
+    (1 | Species / rep_id),
+  data = full_df, REML = FALSE
+)
 
-model_full <- lmer(relative_change ~ smoothing_type * Transition_Rate + 
-                   (1|Species), data = full_df, REML = FALSE)
+anova(full_model, simple_model, very_simple_model)
 
-anova(model_minimal, model_med, model_full)
-```
+sig_terms <- summary(very_simple_model)$coefficients %>%
+  as.data.frame() %>%
+  rownames_to_column("term") %>%
+  filter(`Pr(>|t|)` < 0.05)
+sig_terms
 
-Full model was significantly better, so I will use it.
-
-```{r}
-summary(model_med)
 ```
