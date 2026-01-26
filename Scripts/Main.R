@@ -1,42 +1,41 @@
 # Main Script -------------------------------------------------------------
+set.seed(1000)
 
-base_path <- "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
-# base_path <- "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
+#base_path <- "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
+base_path <- "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
 
 #install.packaged("pacman")
-library(pacman)
-
-p_load(tidyverse, 
-       data.table,
-       bruceR,
-       caret,
-       ggplot2,
-       HMM,
-       torch,
-       tictoc,
-       zoo,
-       lubridate,
-       rlang,
-       tsfeatures,
-       lubridate,
-       effsize,
-       lme4,
-       lmerTest,
-       rBayesianOptimization,
-       ranger)
-
-# for parallel processing
-library(future)
-library(future.apply)
+pacman::p_load(
+         tidyverse, 
+         data.table,
+         bruceR,
+         caret,
+         ggplot2,
+         future,
+         future.apply,
+         HMM,
+         torch,
+         tictoc,
+         zoo,
+         lubridate,
+         rlang,
+         tsfeatures,
+         lubridate,
+         effsize,
+         lme4,
+         lmerTest,
+         rBayesianOptimization,
+         ranger
+        )
 
 # Delete all files from one or more conditions ----------------------------
 # old_files <- list.files(file.path(base_path, "Output"), full.names = TRUE, recursive = TRUE)
-# old_files
+# keep_files <- list.files(file.path(base_path, "Data"), pattern = "Formatted_raw_data.csv", full.names = TRUE, recursive = TRUE)
 # file.remove(old_files)
 
 # Define variables for this run -------------------------------------------
 overlap <- 0 # same for every dataset
-hours_since_creation <- 100 # overwrite model and post-processing files if they were done more than X hrs ago
+hours_since_creation <- 1000 # overwrite model and post-processing files if they were done more than X hrs ago
 available_axes <- c("X", "Y", "Z") # annopying variable I haven't gotten rid of yet
 
 all_species <- list.dirs(file.path(base_path, "Data"), recursive = FALSE)
@@ -75,6 +74,10 @@ for (species in all_species){
   species <- basename(species)
   
   source(file = file.path(base_path, "Scripts", "DataFormatting", paste0(species, "_Formatting.R")))
+  
+  # I later decided I wanted to change the behavioural labels so ran this 1 time
+  # source(file = file.path(base_path, "Scripts", "DataFormatting", "ChangingTheBehaviouralLabels.R")))
+  
   source(file = file.path(base_path, "Scripts", "DataFormatting", "GenerateFeatures.R"))
 
   # repeat the entire process 3 times for cross-validation
@@ -91,7 +94,7 @@ for (species in all_species){
    # define the test IDs for this round
    test_IDs <- ID_groups$ID[ID_groups$group == i]
   
-      # Make the Model ----------------------------------------------------------
+   # Make the Model ----------------------------------------------------------
    # tune, train, and test a model and generate predictions on the test data
    source(file = file.path(base_path, "Scripts", "ModelBuilding", "BuildModel.R"))
   
@@ -128,14 +131,11 @@ for (species in all_species){
    # LSTM Smoothing ----------------------------------------------------------
    # Using a basic neural network to learn the natural sequences of behaviour
    # source(file = file.path(base_path, "Scripts", "SmoothingMethods", "LSTMSmoothing.R"))
-   
   }
 
-  
   # Comparing Smoothing Performances ----------------------------------------
   # this will pull out all the metrics tests and build a report for rapid comparison
   # will also compare the ecological results from each of them
-  
   
   source(file = file.path(base_path, "Scripts", "Comparisons", "ComparingSmoothing.R"))
 

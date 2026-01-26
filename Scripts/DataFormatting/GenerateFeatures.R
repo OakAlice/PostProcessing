@@ -6,12 +6,13 @@ if (file.exists(file.path(base_path, "Data", species, "Feature_data.csv"))){
 } else {
   
   data1 <- fread(file.path(base_path, "Data", species, "Formatted_raw_data.csv"))
+  sample_rate <- sample_rates[[species]] 
   
+  # NOTE: REMOVED THIS FOR NOW
   # Firstly subset the data to an approporiate volume 
   # just so it doesn't take 1 million years to process
-  sample_rate <- sample_rates[[species]] 
-  max_slices <- 600 * sample_rate # maximum of 10 minutes per behaviour per individual
-  data1 <- data1 %>% group_by(ID, Activity) %>% arrange(Time) %>% slice(1:max_slices)
+  # max_slices <- 600 * sample_rate # maximum of 10 minutes per behaviour per individual
+  data1 <- data1 %>% group_by(ID, Activity) %>% arrange(Time) # %>% slice(1:max_slices)
   # TODO: This may be too aggressive, I may have to undo this
   
   # generate the features

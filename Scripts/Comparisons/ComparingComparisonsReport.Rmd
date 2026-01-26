@@ -111,6 +111,9 @@ summaries <- df %>%
   arrange(desc(meanChange))
 summaries
 
+summaries %>% group_by(smoothing_type) %>%
+  summarise(max = max(meanChange), mean = mean(meanChange))
+
 ```
 
 Within species
@@ -180,7 +183,7 @@ very_simple_model <- lmer(
 
 anova(full_model, simple_model, very_simple_model)
 
-sig_terms <- summary(very_simple_model)$coefficients %>%
+sig_terms <- summary(full_model)$coefficients %>%
   as.data.frame() %>%
   rownames_to_column("term") %>%
   filter(`Pr(>|t|)` < 0.05)

@@ -49,7 +49,7 @@ if (file.exists(file.path(base_path, "Data", species, "Formatted_raw_data.csv"))
   formatted_accel_beh2 <- fomatted_accel_beh %>%
     group_by(ID, Activity) %>%
     arrange(Time) %>%
-    slice(1:10000) %>%
+    slice(1:20000) %>%
     ungroup() %>%
     arrange(ID, Time)
   

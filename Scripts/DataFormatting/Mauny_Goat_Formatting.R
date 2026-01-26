@@ -11,23 +11,23 @@ if (file.exists(file.path(base_path, "Data", species, "Formatted_raw_data.csv"))
     df <- fread(x)
     
     # combine the behaviours
-    df[, (names(df)) := lapply(.SD, function(x) {
-      x[x %in% c("nones", "noneo", "no", "nonef")] <- NA
-      x
-    })]
-    
-    # did this once to look at it
     df <- df %>%
-       mutate(combo = paste0(feeding_behav_data_goat, position_behav_data_goat, social_behav_data_goat, other_behav_data_goat, disturb_behav_data_goat)) #%>%
-    #   group_by(combo) %>%
-    #   count()
-    df$combo <- gsub(pattern = "NA", "", df$combo)
-    # there are some that are so aimilar I'm going to add them together
-    df$Activity <- df$combo
-    df$Activity[df$combo == "ruminatinglyingd"] <- "ruminatinglying"
-    df$Activity[df$combo == "lyingd"] <- "lying"
-    df$Activity[df$combo == "standingp"] <- "standing"
-    df$Activity[df$combo == "ruminatingstandingp"] <- "ruminatingstanding"
+      mutate(
+        Activity = case_when(
+          !is.na(feeding_behav_data_goat) ~ feeding_behav_data_goat,
+          !is.na(other_behav_data_goat)   ~ other_behav_data_goat,
+          !is.na(social_behav_data_goat)  ~ social_behav_data_goat,
+          TRUE                            ~ position_behav_data_goat
+        )
+      )
+    df$Activity <- gsub(pattern = "NA", "", df$Activity)
+    # there are some that seem to be typos I'm going to add them together
+    df$Activity[df$Activity == "lyingd"] <- "lying"
+    df$Activity[df$Activity == "standingp"] <- "standing"
+    df$Activity[df$Activity == "othero"] <- "other"
+    df$Activity[df$Activity == "otherf"] <- "other"
+    df$Activity[df$Activity == "nonef"] <- NA
+    df$Activity[df$Activity == ""] <- NA
     
     ID <- str_split(basename(x), "_")[[1]][3]
     df$ID <- gsub(".csv", "", ID)
@@ -41,7 +41,12 @@ if (file.exists(file.path(base_path, "Data", species, "Formatted_raw_data.csv"))
            X = ACCx,
            Y = ACCy,
            Z = ACCz) %>%
-    select(ID, Time, Activity, X, Y, Z)
+    select(ID, Time, Activity, X, Y, Z) %>%
+    na.omit() %>%
+    group_by(ID, Activity) %>%
+    arrange(Time) %>%
+    ungroup() %>%
+    arrange(ID, Time)
   
   fwrite(data, file.path(base_path, "Data", species, "Formatted_raw_data.csv"))
 }
