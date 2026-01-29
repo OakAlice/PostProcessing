@@ -36,8 +36,11 @@ metrics <- rbindlist(metrics) %>%
   select(!Prevelance) %>%
   na.omit()
 
+metrics <- metrics %>% 
+  mutate(smoothing_type = gsub("Smoothing", "", smoothing_type))
+
 # add levels so its easier to plot later
-metrics$smoothing_type <- factor(metrics$smoothing_type, levels = c("NoSmoothing", "ModeSmoothing", "DurationSmoothing", "TransitionSmoothing", "HMMSmoothing", "BayesianSmoothing", "LSTMSmoothing"))
+metrics$smoothing_type <- factor(metrics$smoothing_type, levels = c("No", "Mode", "Duration", "Transition", "HMM", "Bayesian"))
 
 print(metrics %>% dplyr::filter(Activity == "Macro-Average"))
 ```
@@ -70,12 +73,12 @@ print("removed this section for now")
 ```{r simp_plot, fig.width = 6, fig.height = 6}
 # and a simplified plot as 
 simplified_metrics <- metrics_long %>% dplyr::filter(Activity == "Macro-Average")
-ggplot(simplified_metrics, aes(x = Activity, y = Score, fill = smoothing_type)) +
+ggplot(simplified_metrics, aes(x = smoothing_type, y = Score, fill = smoothing_type)) +
   geom_boxplot() +
   facet_wrap(~ Metric, scales = "free_y", ncol = 2) +
   scale_fill_manual(values = my_colours) +
   my_theme() +
-  labs(x = "Activity", y = "Score", fill = "Smoothing Type") +
+  labs(x = "Smoothing Method", y = "Score", fill = "Smoothing Type") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```

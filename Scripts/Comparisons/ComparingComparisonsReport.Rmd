@@ -3,7 +3,7 @@ title: "ComparingComparisonsReport"
 output: html_document
 date: "`r Sys.Date()`"
 params:
-  base_path: "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
+  base_path: "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
 ---
 
 ```{r setup, include=FALSE}
@@ -14,6 +14,7 @@ This is the report to compare the comparisons between the species datasets.
 
 Step 1 is to pull together all the data from each species. 
 ```{r bind, include = FALSE}
+# base_path <- "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
 files <- list.files(file.path(base_path, "Output"), pattern = "all_smoothed_metrics.csv", full.names = TRUE, recursive = TRUE)
 
 data <- lapply(files, function(x){
@@ -37,7 +38,7 @@ fwrite(data, file.path(base_path, "Output", "collated_performance.csv"))
 ```
 
 Step 2 is to compare these results. 
-```{r compare}
+```{r compare, fig.width = 8, fig.height = 8}
 # its hard to make any one single judgement, so I can make a plot for now
 
 # Plot so that control is more obvious
@@ -78,15 +79,13 @@ df_sum <- df %>%
     .groups = "drop"
   )
 
-ggplot(df_sum, aes(x = smoothing_type, y = mean_rc, colour = smoothing_type)) +
+df <- df %>% dplyr::filter(!smoothing_type == "No")
+
+ggplot(df, aes(x = smoothing_type, y = relative_change, fill = smoothing_type)) +
+  geom_boxplot() +
   geom_hline(yintercept = 0, linetype = "dotted", colour = "black") +
-  geom_point(size = 2.5) +
-  geom_errorbar(
-    aes(ymin = mean_rc - se_rc, ymax = mean_rc + se_rc),
-    width = 0.2
-  ) +
   my_theme() +
-  scale_colour_manual(values = my_colours) +
+  scale_fill_manual(values = my_colours) +
   labs(x = "Smoothing Type", y = "Relative change to F1 Score") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   facet_wrap(~Species, ncol = 5) +
@@ -99,9 +98,9 @@ Look at the stats for that. Begin with very general summaries and descriptions.
 ```{r}
 # add the 2 information sources together
 print("best change")
-max(df$relative_change)
+max(df_sum$mean_rc)
 print("worst change")
-min(df$relative_change)
+min(df_sum$mean_rc)
 
 # mean changes
 summaries <- df %>%

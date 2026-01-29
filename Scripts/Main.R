@@ -29,13 +29,13 @@ pacman::p_load(
         )
 
 # Delete all files from one or more conditions ----------------------------
-# old_files <- list.files(file.path(base_path, "Output"), full.names = TRUE, recursive = TRUE)
+# old_files <- list.files(file.path(base_path, "Output"), pattern = "all_smoothed", full.names = TRUE, recursive = TRUE)
 # keep_files <- list.files(file.path(base_path, "Data"), pattern = "Formatted_raw_data.csv", full.names = TRUE, recursive = TRUE)
 # file.remove(old_files)
 
 # Define variables for this run -------------------------------------------
 overlap <- 0 # same for every dataset
-hours_since_creation <- 1000 # overwrite model and post-processing files if they were done more than X hrs ago
+hours_since_creation <- 100 # overwrite model and post-processing files if they were done more than X hrs ago
 available_axes <- c("X", "Y", "Z") # annopying variable I haven't gotten rid of yet
 
 all_species <- list.dirs(file.path(base_path, "Data"), recursive = FALSE)
@@ -58,6 +58,7 @@ sample_rates <- list(Galea_Cat = 50,
 
 # Functions ---------------------------------------------------------------
 source(file = file.path(base_path, "Scripts", "DataFormatting", "GenerateFeatures_Functions.R"))
+source(file = file.path(base_path, "Scripts", "SequenceIdentificationFunctions.R"))
 source(file = file.path(base_path, "Scripts", "PerformanceTestingFunctions.R"))
 source(file = file.path(base_path, "Scripts", "PlottingFunctions.R"))
 
@@ -72,6 +73,8 @@ for (species in all_species){
   
   print(species)
   species <- basename(species)
+  
+  if(!species == "Ferdinandy_Dog"){   # TODO: remove this
   
   source(file = file.path(base_path, "Scripts", "DataFormatting", paste0(species, "_Formatting.R")))
   
@@ -138,6 +141,7 @@ for (species in all_species){
   # will also compare the ecological results from each of them
   
   source(file = file.path(base_path, "Scripts", "Comparisons", "ComparingSmoothing.R"))
+  } # TODO: remove this
 
 }
 
