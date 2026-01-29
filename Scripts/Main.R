@@ -29,7 +29,7 @@ pacman::p_load(
         )
 
 # Delete all files from one or more conditions ----------------------------
-# old_files <- list.files(file.path(base_path, "Output"), pattern = "all_smoothed", full.names = TRUE, recursive = TRUE)
+# old_files <- list.files(file.path(base_path, "Output"), pattern = "Mode", full.names = TRUE, recursive = TRUE)
 # keep_files <- list.files(file.path(base_path, "Data"), pattern = "Formatted_raw_data.csv", full.names = TRUE, recursive = TRUE)
 # file.remove(old_files)
 

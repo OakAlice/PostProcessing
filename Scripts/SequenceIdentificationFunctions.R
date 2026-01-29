@@ -7,6 +7,7 @@ identify_sequences <- function(data, max_break = 1){
   if(species == "Dunford_Cat"){
     data <- data %>%
       group_by(ID) %>%
+      arrange(Time, .by_group = TRUE) %>%
       mutate(
         time_sec = as.numeric(
           strptime(Time, format = "%H:%M:%S", tz = "UTC")

@@ -74,10 +74,11 @@ smooth_durations <- function(test_data, train_summary, minumum_considered_seq_le
 # Code --------------------------------------------------------------------
 ## Load in the training data
 train_data <- fread(file.path(base_path, "Data", species, "Formatted_raw_data.csv")) %>%
-  rename(true_class = Activity)
+  rename(true_class = Activity) %>%
+  arrange(ID, Time)
 
 ## Identify sequences of continuous sampling and continuous behaviours
-train_data <- identify_sequences(train_data, max_break = 1)
+train_data <- identify_sequences(train_data, max_break = ifelse(sample_rates[[species]] > 1, 2.5, 5.5)) # based on window duration and buffer
 train_data <- identify_events(train_data, class_col = "true_class")
 
 # Learn from the training data # these are the lengths in raw samples

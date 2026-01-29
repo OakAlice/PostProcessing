@@ -75,25 +75,26 @@ if (species == "Vehkaoja_Dog"){
 ## Create Transition Matrix ------------------------------------------------
 # based on this information, build a likelihood transition between behaviours
 # this will be very basic just: given a transition, how probable was that transition?
-train_data <- fread(file.path(base_path, "Data", species, "Feature_data.csv")) %>%
-  rename(true_class = Activity)
+train_data <- fread(file.path(base_path, "Data", species, "Formatted_raw_data.csv"))
+train_data <- identify_sequences(train_data, max_break = ifelse(sample_rates[[species]] > 1, 2.5, 5.5)) # based on window duration and buffer
+train_data <- identify_events(train_data, class_col = "Activity")
 
-states <- levels(as.factor(train_data$true_class))
+states <- levels(as.factor(train_data$Activity))
 n_states <- length(states)
 
-# calculate the transitions
+# calculate the transitions within continuous sequences
 transition_counts <- matrix(0, n_states, n_states, dimnames = list(states, states))
 train_data <- train_data %>%
-  arrange(ID, Time) %>%
-  group_by(ID) %>%
-  mutate(next_state = lead(true_class)) %>%
+  group_by(ID, sequence) %>%
+  arrange(Time, .by_group = TRUE) %>%
+  mutate(next_state = lead(Activity)) %>%
   ungroup()
-transitions <- na.omit(train_data[, c("true_class", "next_state")])
+transitions <- na.omit(train_data[, c("Activity", "next_state")]) # remove the ones that are last in sequence
 
 # probability of each of these transitions
 for (j in seq_len(nrow(transitions))) {
-  from <- as.character(transitions$true_class[j])
-  to <- as.character(transitions$next_state[j])
+  from <- as.character(transitions$Activity[j])
+  to <- as.character(transitions$Activity[j])
   transition_counts[from, to] <- transition_counts[from, to] + 1
 }
 
