@@ -211,9 +211,6 @@ best_parameters <- results[best_index, ]
 train_data <- fread(file.path(base_path, "Data", species, paste0("Training_predictions_", i, ".csv"))) %>%
   na.omit() %>%
   arrange(ID, Time)
-test_data <- fread(file.path(base_path, "Data", species, paste0("Original_predictions_", i, ".csv"))) %>%
-  na.omit() %>%
-  arrange(ID, Time)
 
 net <- train_lstm(train_data, 
                   class_levels, 
@@ -221,10 +218,31 @@ net <- train_lstm(train_data,
                   window_size = best_parameters$window_size, 
                   hidden_size = best_parameters$hidden_size)
 
-smoothed_data <- apply_lstm(test_data, 
-                            net, 
-                            window_size = best_parameters$window_size, 
-                            class_levels)
+
+# Apply to the test data --------------------------------------------------
+test_data <- fread(file.path(base_path, "Data", species, paste0("Original_predictions_", i, ".csv"))) %>%
+  as.data.frame() %>%
+  arrange(ID, Time) 
+
+# again, split into sequences and run across each of the sequences
+test_data <- identify_sequences(test_data, max_break = ifelse(sample_rates[[species]] > 1, 3, 6)) # based on window duration and buffer
+test_data$set <- paste(test_data$ID, test_data$sequence, sep = "_")
+
+# run the hmm over each of the sequences and save the smoothed class
+test_data <- lapply(unique(test_data$set), function(x){
+  dat <- test_data %>% dplyr::filter(set == x)
+  if (nrow(dat) < 2) {
+    dat$smoothed_class <- dat$predicted_class
+    return(dat)
+  }
+  dat <- apply_lstm(test_data,
+                    net,
+                    window_size = best_parameters$window_size,
+                    class_levels)
+  
+  dat
+})
+
 
 ## Recalculate performance and save ---------------------------------------
 performance <- compute_metrics(as.factor(smoothed_data$smoothed_class), as.factor(smoothed_data$true_class))
