@@ -2,39 +2,70 @@
 # using the transition probilities and the prediction probibilities
 
 # Functions ---------------------------------------------------------------
-apply_bayes_smoothing <- function(data, states, transition_matrix){
+apply_bayes_smoothing <- function(data, states, transition_matrix) {
+  
+  # sometimes the model predicts fewer classes than are in the training data, and so we get an imbalance
+  # these steps are designed to allow the model to function even without all classes predicted
   
   setDT(data)
   
-  # make something to store it in
-  n_time <- nrow(data)
+  n_time  <- nrow(data)
   n_class <- length(states)
+  
   smoothed_probs <- matrix(0, n_time, n_class)
   colnames(smoothed_probs) <- states
   
-  # Set a basic uniform prior
-  prior <- rep(1 / n_class, n_class)  # uniform prior
-  smoothed_probs[1, ] <- prior * as.numeric(data[1, ..states]) # '..' means doesnt literally search for "states"
-  smoothed_probs[1, ] <- smoothed_probs[1, ] / sum(smoothed_probs[1, ])
+  # get the liklihood
+  get_likelihood <- function(dt_row, states) {
+    lik <- rep(0, length(states))
+    names(lik) <- states
+    
+    present <- intersect(states, names(dt_row))
+    lik[present] <- as.numeric(dt_row[, ..present])
+    
+    lik
+  }
+
+  prior <- rep(1 / n_class, n_class)
   
-  # Recursively apply Bayesian update
-  for (t in 2:n_time) {
-    # Predict next prior using transition matrix
-    prior <- transition_matrix %*% smoothed_probs[t - 1, ]
-    
-    # Multiply with likelihood from classifier
-    likelihood <- as.numeric(data[t, ..states])
-    posterior <- prior * likelihood
-    
-    # Normalise
-    smoothed_probs[t, ] <- posterior / sum(posterior)
+  likelihood <- get_likelihood(data[1], states)
+  posterior  <- prior * likelihood
+  
+  if (sum(posterior) == 0) {
+    posterior <- prior
+  } else {
+    posterior <- posterior / sum(posterior)
   }
   
-  # Select the highest one --------------------------------------------------
-  smoothed_class <- colnames(smoothed_probs)[max.col(smoothed_probs, ties.method = "first")]
+  smoothed_probs[1, ] <- posterior
   
-  return(smoothed_class)
+  # do the bayes filter recursivly
+  for (t in 2:n_time) {
+    
+    # prediction step
+    prior <- as.numeric(transition_matrix %*% smoothed_probs[t - 1, ])
+    
+    # update step
+    likelihood <- get_likelihood(data[t], states)
+    posterior  <- prior * likelihood
+    
+    if (sum(posterior) == 0) {
+      posterior <- prior
+    } else {
+      posterior <- posterior / sum(posterior)
+    }
+    
+    smoothed_probs[t, ] <- posterior
+  }
+  
+  # put in the sequence
+  smoothed_class <- colnames(smoothed_probs)[
+    max.col(smoothed_probs, ties.method = "first")
+  ]
+  
+  smoothed_class
 }
+
 
 # Code --------------------------------------------------------------------
 if(!file.exists(file.path(base_path, "Output", species, paste0("BayesianSmoothing_performance_", i, ".csv")))){
@@ -76,7 +107,7 @@ test_data$set <- paste(test_data$ID, test_data$sequence, sep = "_")
 # run the hmm over each of the sequences and save the smoothed class
 test_data <- lapply(unique(test_data$set), function(x){
   dat <- test_data %>% dplyr::filter(set == x)
-  if (nrow(dat) < 2) {
+  if (nrow(dat) < 3) {
     dat$smoothed_class <- dat$predicted_class
     return(dat)
   }
