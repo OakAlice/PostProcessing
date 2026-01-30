@@ -72,6 +72,8 @@ smooth_durations <- function(test_data, train_summary, minumum_considered_seq_le
 
 
 # Code --------------------------------------------------------------------
+if(!file.exists(file.path(base_path, "Output", species, paste0("DurationSmoothing_performance_", i, ".csv")))){
+  
 ## Load in the training data
 train_data <- fread(file.path(base_path, "Data", species, "Formatted_raw_data.csv")) %>%
   rename(true_class = Activity) %>%
@@ -135,3 +137,6 @@ fwrite(metrics, file.path(base_path, "Output", species, paste0("DurationSmoothin
 #generate_confusion_plot(performance$conf_matrix_padded,
 #                        save_path = file.path(base_path, "Output", species, paste0("DurationSmoothing_performance_", i, ".pdf")))
 
+} else {
+  print("DurationSmoothing already calculated")
+}

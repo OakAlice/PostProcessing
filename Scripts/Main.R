@@ -29,7 +29,7 @@ pacman::p_load(
         )
 
 # Delete all files from one or more conditions ----------------------------
-# old_files <- list.files(file.path(base_path, "Output"), pattern = "Transition", full.names = TRUE, recursive = TRUE)
+# old_files <- list.files(file.path(base_path, "Output"), pattern = ".csv", full.names = TRUE, recursive = TRUE)
 # keep_files <- list.files(file.path(base_path, "Data"), pattern = "Formatted_raw_data.csv", full.names = TRUE, recursive = TRUE)
 # file.remove(old_files)
 
@@ -116,7 +116,7 @@ for (species in all_species){
    source(file = file.path(base_path, "Scripts", "SmoothingMethods", "ModeSmoothing.R"))
   
    # Duration Smoothing ------------------------------------------------------
-   # removing too-short instances based on the 95th percentile durations
+   # removing too-short instances based on the 75th percentile durations
    source(file = file.path(base_path, "Scripts", "SmoothingMethods", "DurationSmoothing.R"))
   
    # Transition Smoothing ----------------------------------------------------

@@ -1,6 +1,8 @@
 # Hidden Markov Model Smoothing -------------------------------------------
 # a simple ML HMM implementation to smooth the data
 
+if(!file.exists(file.path(base_path, "Output", species, paste0("HMMSmoothing_performance_", i, ".csv")))){
+  
 # Extract parameters from the training data -------------------------------
   train_data <- fread(file.path(base_path, "Data", species, paste0("Training_predictions_", i, ".csv"))) %>%
     na.omit()
@@ -73,3 +75,8 @@ performance <- compute_metrics(as.factor(test_data$smoothed_class), as.factor(te
 metrics <- performance$metrics
 fwrite(metrics, file.path(base_path, "Output", species, paste0("HMMSmoothing_performance_", i, ".csv")))
 # generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, paste0("HMMSmoothing_performance_", i, ".pdf")))
+
+
+} else {
+  print("HMMSmoothing already calculated")
+}

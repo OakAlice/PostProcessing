@@ -3,10 +3,7 @@
 source(file = file.path(base_path, "Scripts", "ModelBuilding", "HPOFunctions.R"))
 source(file = file.path(base_path, "Scripts", "PerformanceTestingFunctions.R"))
 
-if (
-  !file.exists(file.path(base_path, "Data", species, paste0("Training_predictions_", i, ".csv"))) ||
-  difftime(Sys.time(), file.info(file.path(base_path, "Data", species, paste0("Training_predictions_", i, ".csv")))$mtime, units = "hours") > hours_since_creation
-) {
+if (!file.exists(file.path(base_path, "Data", species, paste0("Training_predictions_", i, ".csv")))) {
   
 # Split out test data -----------------------------------------------------
 data <- fread(file = file.path(base_path, "Data", species, "Feature_data.csv"))
@@ -133,5 +130,5 @@ metrics <- compute_metrics(predicted_classes = as.factor(predictions_df$predicte
 write.csv(predictions_df, file = file.path(base_path, "Data", species, paste0("Training_predictions_", i, ".csv")), row.names = FALSE)
 
 } else {
-  print("model and predictions recently made for this data")
+  print("model and predictions made for this data")
 }

@@ -32,7 +32,7 @@ rolling_mode_smooth <- function(data, x = 5) {
 }
 
 # Code --------------------------------------------------------------------
-x <- 5 # window size for smoothing
+if(!file.exists(file.path(base_path, "Output", species, paste0("ModeSmoothing_performance_", i, ".csv")))){
 
 # load in the raw data again
 data <- fread(file.path(base_path, "Data", species, paste0("Original_predictions_", i, ".csv")))
@@ -51,3 +51,6 @@ metrics <- performance$metrics
 fwrite(metrics, file.path(base_path, "Output", species, paste0("ModeSmoothing_performance_", i, ".csv")))
 #generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, paste0("ModeSmoothing_performance_", i, ".pdf")))
 
+} else {
+  print("ModeSmoothing already calculated")
+}

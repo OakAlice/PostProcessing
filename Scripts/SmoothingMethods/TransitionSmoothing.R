@@ -92,6 +92,7 @@ update_suspect_transitions <- function(data, transition_probs_melted){
   }
 
 # Code --------------------------------------------------------------------
+if(!file.exists(file.path(base_path, "Output", species, paste0("TransitionSmoothing_performance_", i, ".csv")))){
 ## Create Transition Matrix ------------------------------------------------
 # based on this information, build a likelihood transition between behaviours
 # this will be very basic just: given a transition, how probable was that transition?
@@ -142,3 +143,7 @@ performance <- compute_metrics(as.factor(test_data$smoothed_class), as.factor(te
 metrics <- performance$metrics
 fwrite(metrics, file.path(base_path, "Output", species, paste0("TransitionSmoothing_performance_", i, ".csv")))
 # generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, paste0("TransitionSmoothing_performance_", i, ".pdf")))
+
+} else {
+  print("TransitionSmoothing already calculated")
+}

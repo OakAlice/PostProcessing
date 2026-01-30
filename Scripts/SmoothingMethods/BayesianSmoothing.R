@@ -37,6 +37,8 @@ apply_bayes_smoothing <- function(data, states, transition_matrix){
 }
 
 # Code --------------------------------------------------------------------
+if(!file.exists(file.path(base_path, "Output", species, paste0("BayesianSmoothing_performance_", i, ".csv")))){
+  
 ## Get the transition matrix from the training data -----------------------
 train_data <- fread(file.path(base_path, "Data", species, "Formatted_raw_data.csv")) %>%
   arrange(ID, Time)
@@ -82,9 +84,15 @@ test_data <- lapply(unique(test_data$set), function(x){
   
   dat
 })
+test_data <- rbindlist(test_data)
 
 ## Recalculate performance and save ----------------------------------------
 performance <- compute_metrics(as.factor(test_data$smoothed_class), as.factor(test_data$true_class))
 metrics <- performance$metrics
 fwrite(metrics, file.path(base_path, "Output", species, paste0("BayesianSmoothing_performance_", i, ".csv")))
 # generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, paste0("BayesianSmoothing_performance_", i, ".pdf")))
+
+
+} else {
+  print("BayesianSmoothing already calculated")
+}
