@@ -34,6 +34,8 @@ for (species in regrouped_species){
   lapply(files, function(x){
     dat <- fread(x) %>%
       mutate(Activity = as.character(Activity)) %>%
+      # mutate(Activity = ifelse(Activity == "Not moving", "Not Moving", Activity))
+
       left_join(regrouping, by = c("Activity" = "DatasetActivity")) %>%
       mutate(Activity = coalesce(UpdatedActivity, Activity)) %>%
       select(-UpdatedActivity, -PaperActivity, -Dataset) %>%
@@ -42,3 +44,12 @@ for (species in regrouped_species){
     
   })
 }
+
+
+
+# doing the Ferdinandy Data
+feat_files <- list.files(file.path(base_path, "Data", species), pattern = "Feature_data.csv", full.names = TRUE)
+dat <- fread(feat_files) %>%
+  dplyr::filter(!Activity == "label") %>%
+  select(-group, -EndTime)
+fwrite(dat, feat_files)
