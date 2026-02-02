@@ -12,15 +12,6 @@ for (species in all_species){
   data <- identify_sequences(data, max_break = ifelse(sample_rates[[species]] > 1, 3, 6)) # based on window duration and buffer
   data <- identify_events(data, class_col = "Activity")
   
-  # average behavioural duration
-  window_samples <- sample_rates[[species]] * ifelse(sample_rates[[species]] > 1, 2, 5)
-  durations <- data %>% 
-    group_by(ID, Activity, sequence, event) %>%
-    count() %>% 
-    mutate(n = n / window_samples) %>% # convert to windows
-    group_by(Activity) %>%
-    summarise(mean_duration = mean(n))
-  
   # total number of captured transitions
   total_transitions <- data %>% distinct(ID, sequence, event) %>% nrow()
   
@@ -58,6 +49,30 @@ for (species in all_species){
   )
 
   all_stats <- rbind(all_stats, stats_df)
+  
+  # and then also extract the per behaviour stuff for the per behaviour analysis
+  # average behavioural duration
+  stat_mode <- function(x) {
+    ux <- unique(x)
+    ux[which.max(tabulate(match(x, ux)))]
+  }
+  durations <- data %>% 
+    group_by(ID, Activity, sequence, event) %>%
+    count() %>% 
+    group_by(Activity) %>%
+    summarise(
+      min_len= ceiling(min(n)/window_samples),
+      mean   = ceiling(mean(n)/window_samples),
+      median = ceiling(median(n)/window_samples),
+      mode   = ceiling(stat_mode(n)/window_samples),
+      p75    = ceiling(quantile(n, 0.25)/window_samples), # longer than 75% of examples
+      p95    = ceiling(quantile(n, 0.05)/window_samples), # longer than 95% of examples
+      max    = ceiling(max(n)),
+      .groups = "drop"
+    )
+  
+  fwrite(durations, file.path(base_path, "Output", species, "Duration_stats.csv"))
+  
 }
 
 fwrite(all_stats, file.path(base_path, "Output", "All_sequence_stats.csv"))

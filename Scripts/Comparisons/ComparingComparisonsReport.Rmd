@@ -124,8 +124,22 @@ ggplot(df, aes(x = smoothing_type, y = relative_change, fill = smoothing_type)) 
 ## Part Three: Per behavioural breakdown
 Per behaviour
 ```{r fig.width = 20, fig.height = 15}
+# reading in the behaviour duration stats
+durationfiles <- list.files(file.path(base_path, "Output"), pattern = "Duration_stats.csv", full.names = TRUE, recursive = TRUE)
+durationdata <- lapply(durationfiles, function(x){
+  data <- fread(x)
+  data$Species <- basename(dirname(x))
+  data$Activity <- as.character(data$Activity)
+  return(data)
+})
+durationdata <- bind_rows(durationdata)
+
 plot_data <- data %>%
-  filter(Activity != "Macro-Average")
+  filter(Activity != "Macro-Average",
+         Metric == "F1")
+
+# merge together
+plot_data <- merge(plot_data, durationdata, by = c("Species", "Activity"))
 
 # define replicate id
 plot_data[, rep_id := seq_len(.N), by = .(Species, smoothing_type, Activity)]
@@ -162,7 +176,13 @@ ggplot(
   ) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   facet_wrap(~ Species, scales = "free")
-
+# 
+# mod <- lmer(relative_change ~ mean_c * smoothing_type + (1|rep_id), data = plot_data)
+# summary(mod)
+# 
+# ggplot(plot_data, aes(x = mean_c, y = relative_change)) + geom_point() +
+#     facet_wrap(~Species, ncol = 5) +
+#   theme(legend.position = "none")
 
 ```
 
