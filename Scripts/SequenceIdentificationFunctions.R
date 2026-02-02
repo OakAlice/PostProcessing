@@ -22,8 +22,10 @@ identify_sequences <- function(data, max_break = 1){
       ) %>%
       ungroup() %>%
       select(-time_sec, -day_offset, -numeric_datetime)
+  } else if (species == "Ferdinandy_Dog"){
+    data <- data %>% 
+      mutate(Time = as.numeric(Time))
   }
-  
   
   data <- data %>%
     group_by(ID) %>%

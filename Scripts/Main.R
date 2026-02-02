@@ -1,7 +1,7 @@
 # Main Script -------------------------------------------------------------
 set.seed(1000)
 
-#base_path <- "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
+# base_path <- "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
 base_path <- "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
 
 #install.packaged("pacman")
@@ -35,7 +35,6 @@ pacman::p_load(
 
 # Define variables for this run -------------------------------------------
 overlap <- 0 # same for every dataset
-hours_since_creation <- 100 # overwrite model and post-processing files if they were done more than X hrs ago
 available_axes <- c("X", "Y", "Z") # annopying variable I haven't gotten rid of yet
 
 all_species <- list.dirs(file.path(base_path, "Data"), recursive = FALSE)
@@ -74,7 +73,7 @@ for (species in all_species){
   print(species)
   species <- basename(species)
   
-  if(!species == "Ferdinandy_Dog"){   # TODO: remove this
+  # if(!species %in% c("Yu_Duck", "Vehkaoja_Dog")){   # TODO: remove this
   
   source(file = file.path(base_path, "Scripts", "DataFormatting", paste0(species, "_Formatting.R")))
   
@@ -141,7 +140,7 @@ for (species in all_species){
   # will also compare the ecological results from each of them
   
   source(file = file.path(base_path, "Scripts", "Comparisons", "ComparingSmoothing.R"))
-  } # TODO: remove this
+  # } # TODO: remove this
 
 }
 
