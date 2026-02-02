@@ -1,8 +1,8 @@
 # Main Script -------------------------------------------------------------
 set.seed(1000)
 
-# base_path <- "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
-base_path <- "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
+base_path <- "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
+# base_path <- "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
 
 #install.packaged("pacman")
 pacman::p_load(
@@ -73,8 +73,6 @@ for (species in all_species){
   print(species)
   species <- basename(species)
   
-  # if(!species %in% c("Yu_Duck", "Vehkaoja_Dog")){   # TODO: remove this
-  
   source(file = file.path(base_path, "Scripts", "DataFormatting", paste0(species, "_Formatting.R")))
   
   # I later decided I wanted to change the behavioural labels so ran this 1 time
@@ -129,18 +127,11 @@ for (species in all_species){
    # Bayesian Smoothing ------------------------------------------------------
    # Bayes rules to smooth transitions
    source(file = file.path(base_path, "Scripts", "SmoothingMethods", "BayesianSmoothing.R"))
-  
-   # LSTM Smoothing ----------------------------------------------------------
-   # Using a basic neural network to learn the natural sequences of behaviour
-   # source(file = file.path(base_path, "Scripts", "SmoothingMethods", "LSTMSmoothing.R"))
   }
 
   # Comparing Smoothing Performances ----------------------------------------
   # this will pull out all the metrics tests and build a report for rapid comparison
-  # will also compare the ecological results from each of them
-  
   source(file = file.path(base_path, "Scripts", "Comparisons", "ComparingSmoothing.R"))
-  # } # TODO: remove this
 
 }
 

@@ -12,7 +12,6 @@ knitr::opts_chunk$set(echo = FALSE, fig.width = 8, fig.height = 5)
 
 This is the report to compare the comparisons between the species datasets.
 
-Step 1 is to pull together all the data from each species. 
 ```{r bind, include = FALSE}
 # base_path <- "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
 files <- list.files(file.path(base_path, "Output"), pattern = "all_smoothed_metrics.csv", full.names = TRUE, recursive = TRUE)
@@ -24,12 +23,11 @@ data <- lapply(files, function(x){
 })
 
 data <- bind_rows(data)
-data <- data %>% dplyr::filter(Activity == "Macro-Average") %>%
+data <- data %>%
   mutate(smoothing_type = gsub("Smoothing", "", smoothing_type))
 
 # add levels so its easier to plot later
 data$smoothing_type <- factor(data$smoothing_type, levels = c("No", "Mode", "Duration", "Transition", "HMM", "Bayesian")) #, "LSTM"))
-
 data$Species <- factor(data$Species, levels = c(unique(data$Species)))
 
 # save this
@@ -37,7 +35,8 @@ data$Species <- factor(data$Species, levels = c(unique(data$Species)))
 fwrite(data, file.path(base_path, "Output", "collated_performance.csv"))
 ```
 
-Looking at base perfoamcne.
+## Part One: Base Performance
+Looking at base performance.
 ```{r}
 means <- data %>% dplyr::filter(Activity == "Macro-Average", Metric == "F1", smoothing_type == "No") %>%
   group_by(smoothing_type, Species) %>%
@@ -50,23 +49,10 @@ min(means$Score)
 
 ```
 
-
-
-Step 2 is to compare these results. 
-```{r compare, fig.width = 8, fig.height = 8}
-# its hard to make any one single judgement, so I can make a plot for now
-
-# Plot so that control is more obvious
+## Part Two: Overall Post-processing effect
+Firstly I'll look at how much improvement there was overall
+```{r}
 df <- data %>% dplyr::filter(Activity == "Macro-Average", Metric == "F1")
-ggplot(df, aes(x = smoothing_type, y = Score, fill = smoothing_type)) +
-  geom_boxplot() +
-  my_theme() +
-  scale_fill_manual(values = my_colours) +
-  labs(x = "Activity", y = "Score", fill = "Smoothing Type") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  facet_wrap(~Species)
-
-
 # and also do it as relative from the control
 setDT(df)
 
@@ -83,8 +69,6 @@ df <- merge(
   all.x = TRUE
 )
 df[, relative_change := Score - baseline]
-
-# now plot that
 df_sum <- df %>%
   filter(smoothing_type != "No") %>%
   group_by(Species, smoothing_type) %>%
@@ -93,8 +77,38 @@ df_sum <- df %>%
     se_rc   = sd(relative_change, na.rm = TRUE) / sqrt(n())
   )
 
-df <- df %>% dplyr::filter(!smoothing_type == "No")
+print("number of datasets that were positively influenced by at least one method")
+df_sum %>%
+  group_by(Species) %>%
+  summarise(any_positive = any(mean_rc > 0, na.rm = TRUE)) %>%
+  summarise(
+    n_species_positive = sum(any_positive),
+    n_species_total = n()
+  )
+print("number of methods that had positively influence in at least one dataset")
+df_sum %>%
+  group_by(smoothing_type) %>%
+  summarise(any_positive = any(mean_rc > 0, na.rm = TRUE)) %>%
+  summarise(
+    n_smoothing_types_positive = sum(any_positive),
+    n_smoothing_types_total = n()
+  )
 
+```
+
+```{r compare, fig.width = 8, fig.height = 8}
+# its hard to make any one single judgement, so I can make a plot for now
+
+# Plot so that control is more obvious
+ggplot(df, aes(x = smoothing_type, y = Score, fill = smoothing_type)) +
+  geom_boxplot() +
+  my_theme() +
+  scale_fill_manual(values = my_colours) +
+  labs(x = "Activity", y = "Score", fill = "Smoothing Type") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~Species)
+
+df <- df %>% dplyr::filter(!smoothing_type == "No")
 ggplot(df, aes(x = smoothing_type, y = relative_change, fill = smoothing_type)) +
   geom_boxplot() +
   geom_hline(yintercept = 0, linetype = "dotted", colour = "black") +
@@ -107,39 +121,61 @@ ggplot(df, aes(x = smoothing_type, y = relative_change, fill = smoothing_type)) 
 
 ```
 
-Look at the stats for that. Begin with very general summaries and descriptions.
+## Part Three: Per behavioural breakdown
+Per behaviour
+```{r fig.width = 20, fig.height = 15}
+plot_data <- data %>%
+  filter(Activity != "Macro-Average")
 
-```{r}
-# add the 2 information sources together
-print("best change")
-max(df$relative_change)
-max(df_sum$mean_rc)
-print("worst change")
-min(df$relative_change)
-min(df_sum$mean_rc)
+# define replicate id
+plot_data[, rep_id := seq_len(.N), by = .(Species, smoothing_type, Activity)]
 
-# mean changes
-summaries <- df %>%
-  group_by(Species, smoothing_type) %>%
-  summarise(meanF1 = mean(Score),
-            meanChange = mean(relative_change)) %>%
-  arrange(desc(meanChange))
-summaries
+# extract baseline (No smoothing)
+baseline <- plot_data[
+  smoothing_type == "No",
+  .(Species, Activity, rep_id, baseline = Score)
+]
 
-summaries %>% group_by(smoothing_type) %>%
-  summarise(max = max(meanChange), mean = mean(meanChange))
+# merge baseline
+plot_data <- merge(
+  plot_data,
+  baseline,
+  by = c("Species", "Activity", "rep_id"),
+  all.x = TRUE
+)
+
+# compute relative change
+plot_data[, relative_change := Score - baseline]
+
+ggplot(
+  plot_data %>% filter(smoothing_type != "No"),
+  aes(x = as.factor(Activity), y = relative_change, fill = smoothing_type)
+) +
+  geom_boxplot() +
+  geom_hline(yintercept = 0, linetype = "dotted", colour = "black") +
+  my_theme() +
+  scale_fill_manual(values = my_colours) +
+  labs(
+    x = "Activity",
+    y = "Relative change vs no smoothing",
+    fill = "Smoothing Type"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~ Species, scales = "free")
+
 
 ```
 
+## Part Four: Within species
 Within species
 ```{r}
 # per species
 species <- unique(df$Species)
 all_stats <- data.frame()
 for (x in species){
-  dat <- df %>% dplyr::filter(Species == x)
-  dat$smoothing_type <- relevel(dat$smoothing_type, ref = "No")
-  mod <- lmer(
+  dat <- df %>% dplyr::filter(Species == x, 
+                              !smoothing_type == "No")
+  mod <- lm(
     relative_change ~ 0 + smoothing_type + (1 | rep_id),
     data = dat
   )
@@ -158,6 +194,7 @@ sig_stats <- all_stats %>% dplyr::filter(sig == TRUE)
 sig_stats
 ```
 
+## Part Five: Finding covariates to explain variation
 Across species
 ```{r}
 # all species
@@ -176,29 +213,32 @@ full_df <- merge(df, stat_file, by = "Species")
 ```{r some stats}
 
 full_model <- lmer(
-  relative_change ~ 0 + smoothing_type * Transition_Rate * Prop_Transitions +
+  relative_change ~ 0 + smoothing_type * transition_rate * multi_behaviour * Num_Activities * total_transitions +
     (1 | Species / rep_id),
   data = full_df, REML = FALSE
 )
 #summary(full_model)
 
 simple_model <- lmer(
-  relative_change ~ 0 + smoothing_type * Transition_Rate +
-    smoothing_type * Prop_Transitions +
+  relative_change ~ 0 + smoothing_type * transition_rate +
+    smoothing_type * multi_behaviour +
+    smoothing_type * total_transitions +
+    smoothing_type * Num_Activities +
     (1 | Species / rep_id),
   data = full_df, REML = FALSE
 )
 #summary(simple_model)
 
 very_simple_model <- lmer(
-  relative_change ~ 0 + smoothing_type + Transition_Rate + Prop_Transitions +
+  relative_change ~ 0 + smoothing_type + transition_rate + multi_behaviour + total_transitions + Num_Activities +
     (1 | Species / rep_id),
   data = full_df, REML = FALSE
 )
+# summary(very_simple_model)
 
 anova(full_model, simple_model, very_simple_model)
 
-sig_terms <- summary(very_simple_model)$coefficients %>%
+sig_terms <- summary(simple_model)$coefficients %>%
   as.data.frame() %>%
   rownames_to_column("term") %>%
   filter(`Pr(>|t|)` < 0.05)
