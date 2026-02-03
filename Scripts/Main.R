@@ -60,6 +60,7 @@ source(file = file.path(base_path, "Scripts", "DataFormatting", "GenerateFeature
 source(file = file.path(base_path, "Scripts", "SequenceIdentificationFunctions.R"))
 source(file = file.path(base_path, "Scripts", "PerformanceTestingFunctions.R"))
 source(file = file.path(base_path, "Scripts", "PlottingFunctions.R"))
+source(file = file.path(base_path, "Scripts", "SmoothingFunctions.R"))
 
 # Dataset Characteristics -------------------------------------------------
 # define traits from each of the datasets
@@ -141,4 +142,10 @@ source(file = file.path(base_path, "Scripts", "SequentialReport.R"))
 
 # Comparing the comparisons -----------------------------------------------
 source(file = file.path(base_path, "Scripts", "Comparisons", "ComparingComparisons.R"))
+
+
+# Ecological CaseStudy ----------------------------------------------------
+source(file = file.path(base_path, "Scripts", "CaseStudy", "GenerateEcologicalPredictions.R"))
+source(file = file.path(base_path, "Scripts", "CaseStudy", "CaseStudySmoothing.R"))
+source(file = file.path(base_path, "Scripts", "CaseStudy", "CaseStudyComparison.R"))
 
