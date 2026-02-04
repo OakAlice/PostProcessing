@@ -4,6 +4,26 @@ get_mode <- function(x) {
   ux[which.max(tabulate(match(x, ux)))]
 }
 
+# remove redundant and NA columns
+removeBadFeatures <- function(feature_data, var_threshold, corr_threshold) {
+  
+  # Step 1: Calculate variance for numeric columns
+  numeric_columns <- feature_data[, .SD, .SDcols = !names(feature_data) %in% c("Activity", "ID", "Time")]
+  variances <- numeric_columns[, lapply(.SD, var, na.rm = TRUE)]
+  selected_columns <- names(variances)[!is.na(variances) & variances > var_threshold]
+  
+  if (!length(selected_columns) > 2){
+    selected_columns <- names(variances)[!is.na(variances)] # include all of them then
+  }
+  
+  # Step 2: Remove highly correlated features
+  numeric_columns <- numeric_columns[, ..selected_columns]
+  corr_matrix <- cor(numeric_columns, use = "pairwise.complete.obs")
+  high_corr <- findCorrelation(corr_matrix, cutoff = corr_threshold)
+  remaining_features <- setdiff(names(numeric_columns), names(numeric_columns)[high_corr])
+  
+  return(remaining_features)
+}
 
 # only do this code if the feature was requested by name ####
 compute_if <- function(name, value, specific_features) {

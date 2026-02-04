@@ -57,7 +57,6 @@ df <- data %>% dplyr::filter(Activity == "Macro-Average", Metric == "F1")
 setDT(df)
 
 # Get NoSmoothing scores by Species
-df[, rep_id := seq_len(.N), by = .(Species, smoothing_type)]
 baseline <- df[
   smoothing_type == "No",
   .(Species, rep_id, baseline = Score)
@@ -75,23 +74,6 @@ df_sum <- df %>%
   summarise(
     mean_rc = mean(relative_change, na.rm = TRUE),
     se_rc   = sd(relative_change, na.rm = TRUE) / sqrt(n())
-  )
-
-print("number of datasets that were positively influenced by at least one method")
-df_sum %>%
-  group_by(Species) %>%
-  summarise(any_positive = any(mean_rc > 0, na.rm = TRUE)) %>%
-  summarise(
-    n_species_positive = sum(any_positive),
-    n_species_total = n()
-  )
-print("number of methods that had positively influence in at least one dataset")
-df_sum %>%
-  group_by(smoothing_type) %>%
-  summarise(any_positive = any(mean_rc > 0, na.rm = TRUE)) %>%
-  summarise(
-    n_smoothing_types_positive = sum(any_positive),
-    n_smoothing_types_total = n()
   )
 
 ```
@@ -118,71 +100,6 @@ ggplot(df, aes(x = smoothing_type, y = relative_change, fill = smoothing_type)) 
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   facet_wrap(~Species, ncol = 5) +
   theme(legend.position = "none")
-
-```
-
-## Part Three: Per behavioural breakdown
-Per behaviour
-```{r fig.width = 20, fig.height = 15}
-# reading in the behaviour duration stats
-durationfiles <- list.files(file.path(base_path, "Output"), pattern = "Duration_stats.csv", full.names = TRUE, recursive = TRUE)
-durationdata <- lapply(durationfiles, function(x){
-  data <- fread(x)
-  data$Species <- basename(dirname(x))
-  data$Activity <- as.character(data$Activity)
-  return(data)
-})
-durationdata <- bind_rows(durationdata)
-
-plot_data <- data %>%
-  filter(Activity != "Macro-Average",
-         Metric == "F1")
-
-# merge together
-plot_data <- merge(plot_data, durationdata, by = c("Species", "Activity"))
-
-# define replicate id
-plot_data[, rep_id := seq_len(.N), by = .(Species, smoothing_type, Activity)]
-
-# extract baseline (No smoothing)
-baseline <- plot_data[
-  smoothing_type == "No",
-  .(Species, Activity, rep_id, baseline = Score)
-]
-
-# merge baseline
-plot_data <- merge(
-  plot_data,
-  baseline,
-  by = c("Species", "Activity", "rep_id"),
-  all.x = TRUE
-)
-
-# compute relative change
-plot_data[, relative_change := Score - baseline]
-
-ggplot(
-  plot_data %>% filter(smoothing_type != "No"),
-  aes(x = as.factor(Activity), y = relative_change, fill = smoothing_type)
-) +
-  geom_boxplot() +
-  geom_hline(yintercept = 0, linetype = "dotted", colour = "black") +
-  my_theme() +
-  scale_fill_manual(values = my_colours) +
-  labs(
-    x = "Activity",
-    y = "Relative change vs no smoothing",
-    fill = "Smoothing Type"
-  ) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  facet_wrap(~ Species, scales = "free")
-# 
-# mod <- lmer(relative_change ~ mean_c * smoothing_type + (1|rep_id), data = plot_data)
-# summary(mod)
-# 
-# ggplot(plot_data, aes(x = mean_c, y = relative_change)) + geom_point() +
-#     facet_wrap(~Species, ncol = 5) +
-#   theme(legend.position = "none")
 
 ```
 

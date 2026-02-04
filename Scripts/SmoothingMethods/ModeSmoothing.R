@@ -19,6 +19,10 @@ metrics <- performance$metrics
 
 # save these
 fwrite(metrics, file.path(base_path, "Output", species, paste0("ModeSmoothing_performance_", i, ".csv")))
+#if(i == 1){
+  predictions <- data %>% select(ID, Time, smoothed_class, true_class)
+  fwrite(predictions, file.path(base_path, "Output", species, paste0("ModeSmoothing_predictions_", i, ".csv")))
+#}
 #generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, paste0("ModeSmoothing_performance_", i, ".pdf")))
 
 } else {

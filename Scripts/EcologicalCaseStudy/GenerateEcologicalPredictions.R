@@ -1,12 +1,9 @@
 # Ecology example ---------------------------------------------------------
 # Case study with an ecological example.
-
-source(file = file.path(base_path, "Scripts", "CaseStudy", "GenerateSpecificFeatures.R"))
-
-if(!file.exists(file.path(base_path, "CaseStudy", paste0("Final_model.rds")))){
+if(!file.exists(file.path(base_path, "CaseStudy", species, paste0("Final_model.rds")))){
 
   # Load in the hyperparameters from the 3 optimised models -----------------
-  previous_models <- list.files(file.path(base_path, "Data", "Sparkes_Koala"), pattern = ".rds", full.names = TRUE)
+  previous_models <- list.files(file.path(base_path, "Data", species), pattern = ".rds", full.names = TRUE)
   HP <- lapply(previous_models, function(x){
     model <- readRDS(x)
     mtry <- model$mtry
@@ -28,7 +25,7 @@ if(!file.exists(file.path(base_path, "CaseStudy", paste0("Final_model.rds")))){
   best_max_depth <- HP$max_depth[HP$error == min(HP$error)]
   
   # Train a model on all the labelled data ----------------------------------
-  labelled_data <- as.data.table(fread(file.path(base_path, "Data", "Sparkes_Koala", "Feature_data.csv")))
+  labelled_data <- as.data.table(fread(file.path(base_path, "Data", species, "Feature_data.csv")))
   clean_cols <- removeBadFeatures(labelled_data, var_threshold = 0.3, corr_threshold = 0.9)
   training_data <- labelled_data %>%
     select(c(!!!syms(clean_cols), "Activity")) %>%
@@ -55,14 +52,12 @@ if(!file.exists(file.path(base_path, "CaseStudy", paste0("Final_model.rds")))){
   )
   
   prediction_error <- RF_model$prediction.error
-  saveRDS(RF_model, file.path(base_path, "CaseStudy", paste0("Final_model.rds")))
+  saveRDS(RF_model, file.path(base_path, "CaseStudy", species, paste0("Final_model.rds")))
 } else {
   # load in the model
   print("already generated -- loading now...")
-  RF_model <- readRDS(file.path(base_path, "CaseStudy", paste0("Final_model.rds")))
+  RF_model <- readRDS(file.path(base_path, "CaseStudy", species, paste0("Final_model.rds")))
 }
-
-
 
 # Extract the features that were used -------------------------------------
 all_good_features <- RF_model$forest$independent.variable.names
@@ -113,12 +108,13 @@ needed_groups <- names(features_mapping)[
 # now generate them for each chunk
 
 # for now I just have one individual but could expand out later
-individual <- "Angelina"
-
-if(!file.exists(file.path(base_path, "CaseStudy", "Predictions", paste0(individual, "_original_predictions.csv")))){
+individuals <- list.dirs(file.path(base_path, "CaseStudy", species, "RawData"), full.names = TRUE, recursive = FALSE)
+for (individual in individuals){
+  # individual <- basename(individuals[3])
+  individual <- basename(individual)
     
   # Process each of the files -----------------------------------------------
-  unlabelled_files <- list.files(file.path(base_path, "CaseStudy", "RawData"), full.names = TRUE, pattern = ".csv", recursive = TRUE)
+  unlabelled_files <- list.files(file.path(base_path, "CaseStudy", species, "RawData", individual), full.names = TRUE, pattern = ".csv", recursive = TRUE)
   # x <- unlabelled_files[3]
   
   # for each of the unlabelled files, generate features and then make predictions
@@ -127,12 +123,12 @@ if(!file.exists(file.path(base_path, "CaseStudy", "Predictions", paste0(individu
     name <- fname # gsub("[0-9_]", "", fname)
     
     # generate features
-    if (file.exists(file.path(base_path, "CaseStudy", "FeatureData", paste0(name, "_features.csv")))) {
+    if (file.exists(file.path(base_path, "CaseStudy", species, "FeatureData", paste0(name, "_features.csv")))) {
       print(paste("feature data already generated for", name))
     } else {
       
       dat <- fread(x)
-      dat <- dat[, 1:4]
+      dat <- dat[, 2:5] # first column is just a row number
       colnames(dat) <- c("Time", "X", "Y", "Z")
       dat$ID <- fname # for now give it the numeric as well
       
@@ -143,23 +139,26 @@ if(!file.exists(file.path(base_path, "CaseStudy", "Predictions", paste0(individu
           specific_features = all_good_features, 
           needed_groups = needed_groups,
           window_length = 2, 
-          sample_rate = 50, 
+          sample_rate = sample_rates[[species]], 
           overlap_percent = 0
         )
       print("chunk done")
   
       # write it as a temp file
-      fwrite(feature_data_specific, file.path(base_path, "CaseStudy", "FeatureData", paste0(name, "_features.csv")))
+      fwrite(feature_data_specific, file.path(base_path, "CaseStudy", species, "FeatureData", paste0(name, "_features.csv")))
     }
   })
+}
     
   # Make predictions on each ------------------------------------------------
-  unlabelled_features <- list.files(file.path(base_path, "CaseStudy", "FeatureData"), full.names = TRUE, pattern = ".csv", recursive = TRUE)
+  unlabelled_features <- list.files(file.path(base_path, "CaseStudy", species, "FeatureData"), full.names = TRUE, pattern = ".csv", recursive = TRUE)
   predictions <- lapply(unlabelled_features, function(x){
     dat <- fread(x)
     
-    # I messed up the feature column names oopsy # add the "Accel." back in
-    colnames(dat) <- gsub("^(X_|Y_|Z_)", "Accel.\\1", colnames(dat))
+    if(species == "Sparkes_Koala"){
+      # I messed up the feature column names oopsy # add the "Accel." back in
+      colnames(dat) <- gsub("^(X_|Y_|Z_)", "Accel.\\1", colnames(dat))
+    }
     # now select these features
     complete_cases <- dat %>%
       select(all_of(c(all_good_features, "ID", "Time"))) %>%
@@ -177,10 +176,19 @@ if(!file.exists(file.path(base_path, "CaseStudy", "Predictions", paste0(individu
     predictions_df
   })
   predictions <- rbindlist(predictions)
-  individual <- str_split(name, "_")[[1]][1]
-  predictions$ID <- individual
-  fwrite(predictions, file.path(base_path, "CaseStudy", "Predictions", paste0(individual, "_original_predictions.csv")))
+  predictions$ID <- gsub("_[0-9]{3}$", "", predictions$ID)
   
-} else {
-  print("predictions already generated for this individual")
-}
+  if(species == "Sparkes_Koala"){
+    predictions$Time <- as.POSIXct((predictions$Time - 719529)*86400, origin = "1970-01-01", tz = "UTC")
+  } else if (species == "Clemente_Echidna"){
+    predictions <- predictions %>%
+      group_by(ID) %>%
+      arrange(Time, .by_group = TRUE) %>%
+      mutate(
+        # Start at arbitrary origin datetime
+        Time = as.POSIXct("2025-01-01 00:00:00", tz = "UTC") + (Time - min(Time))
+      ) %>%
+      ungroup()
+  }
+  
+  fwrite(predictions, file.path(base_path, "CaseStudy", species, "Predictions", "Original_predictions.csv"))

@@ -1,11 +1,3 @@
-# Ecological Testing Functions --------------------------------------------
-# the other way to test the performance of the model is to see how it answers an 
-# ecological question of choice
-
-# I'm not sure what to do with this yet... but will just leave here for now
-# can build on this more in future
-
-
 # have commented out anything I'm not explicitly using 
 # was taking way too long with dplyr so had to switch to data.table
 # which I am much worse at

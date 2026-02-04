@@ -38,6 +38,13 @@ for (species in all_species){
     mutate(rate = transitions / rows) %>%
     summarise(mean_rate = mean(rate))
   
+  # mean sequence duration
+  mean_seq_duration <- data %>% 
+    group_by(ID, sequence) %>%
+    count() %>%
+    ungroup() %>%
+    summarise(mean_seq_len = mean(n))
+  
   # save these into the output file for later stats retrieval
   stats_df <- data.frame(
     Species = species,
@@ -45,34 +52,12 @@ for (species in all_species){
     mean_transitions = as.numeric(mean_transitions$transitions),
     multi_behaviour = as.numeric(multi_behaviour$prop_multi_sequence),
     transition_rate = as.numeric(transition_rate$mean_rate),
+    mean_seq_len = as.numeric(mean_seq_duration$mean_seq_len)/sample_rates[[species]],
+    Num_IDs = as.numeric(length(unique(data$ID))),
     Num_Activities = as.numeric(length(unique(data$Activity)))
   )
 
   all_stats <- rbind(all_stats, stats_df)
-  
-  # and then also extract the per behaviour stuff for the per behaviour analysis
-  # average behavioural duration
-  stat_mode <- function(x) {
-    ux <- unique(x)
-    ux[which.max(tabulate(match(x, ux)))]
-  }
-  durations <- data %>% 
-    group_by(ID, Activity, sequence, event) %>%
-    count() %>% 
-    group_by(Activity) %>%
-    summarise(
-      min_len= ceiling(min(n)/window_samples),
-      mean   = ceiling(mean(n)/window_samples),
-      median = ceiling(median(n)/window_samples),
-      mode   = ceiling(stat_mode(n)/window_samples),
-      p75    = ceiling(quantile(n, 0.25)/window_samples), # longer than 75% of examples
-      p95    = ceiling(quantile(n, 0.05)/window_samples), # longer than 95% of examples
-      max    = ceiling(max(n)),
-      .groups = "drop"
-    )
-  
-  fwrite(durations, file.path(base_path, "Output", species, "Duration_stats.csv"))
-  
 }
 
 fwrite(all_stats, file.path(base_path, "Output", "All_sequence_stats.csv"))

@@ -36,9 +36,14 @@ if(!file.exists(file.path(base_path, "Output", species, paste0("BayesianSmoothin
   test_data <- rbindlist(test_data)
   
   ## Recalculate performance and save ----------------------------------------
-  performance <- compute_metrics(as.factor(test_data$smoothed_class), as.factor(test_data$true_class))
+  performance <- compute_metrics(predicted_classes = as.factor(test_data$smoothed_class), 
+                                 ground_truth_labels = as.factor(test_data$true_class))
   metrics <- performance$metrics
   fwrite(metrics, file.path(base_path, "Output", species, paste0("BayesianSmoothing_performance_", i, ".csv")))
+  #if(i == 1){
+    predictions <- test_data %>% select(ID, Time, smoothed_class, true_class)
+    fwrite(predictions, file.path(base_path, "Output", species, paste0("BayesianSmoothing_predictions_", i, ".csv")))
+  #}
   # generate_confusion_plot(performance$conf_matrix_padded, save_path= file.path(base_path, "Output", species, paste0("BayesianSmoothing_performance_", i, ".pdf")))
 
 } else {

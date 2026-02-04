@@ -38,13 +38,13 @@ compute_metrics <- function(predicted_classes, ground_truth_labels) {
   confusion_matrix <- table(predicted_classes, ground_truth_labels)
   all_classes <- union(levels(predicted_classes), levels(ground_truth_labels))
   
-  # Create a padded confusion matrix
+  # Create a padded confusion matrix (in case there are missing classes)
   conf_matrix_padded <- matrix(0, nrow = length(all_classes), ncol = length(all_classes),
                                dimnames = list(all_classes, all_classes))
   conf_matrix_padded[rownames(confusion_matrix), colnames(confusion_matrix)] <- confusion_matrix
   
   # Calculate F1 score and other metrics using confusionMatrix from caret
-  confusion_mtx <- confusionMatrix(conf_matrix_padded)
+  confusion_mtx <- caret::confusionMatrix(conf_matrix_padded)
   
   byClass <- confusion_mtx$byClass
   

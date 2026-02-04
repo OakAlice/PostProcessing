@@ -1,4 +1,5 @@
 # Main Script -------------------------------------------------------------
+# sourcing for experiments
 set.seed(1000)
 
 # base_path <- "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
@@ -29,7 +30,7 @@ pacman::p_load(
         )
 
 # Delete all files from one or more conditions ----------------------------
-# old_files <- list.files(file.path(base_path, "Output"), pattern = ".csv", full.names = TRUE, recursive = TRUE)
+# old_files <- list.files(file.path(base_path, "Output"), pattern = "_3", full.names = TRUE, recursive = TRUE)
 # keep_files <- list.files(file.path(base_path, "Data"), pattern = "Formatted_raw_data.csv", full.names = TRUE, recursive = TRUE)
 # file.remove(old_files)
 
@@ -56,7 +57,7 @@ sample_rates <- list(Galea_Cat = 50,
                      )
 
 # Functions ---------------------------------------------------------------
-source(file = file.path(base_path, "Scripts", "DataFormatting", "GenerateFeatures_Functions.R"))
+source(file = file.path(base_path, "Scripts", "ModelBuilding", "GenerateFeatures_Functions.R"))
 source(file = file.path(base_path, "Scripts", "SequenceIdentificationFunctions.R"))
 source(file = file.path(base_path, "Scripts", "PerformanceTestingFunctions.R"))
 source(file = file.path(base_path, "Scripts", "PlottingFunctions.R"))
@@ -79,7 +80,7 @@ for (species in all_species){
   # I later decided I wanted to change the behavioural labels so ran this 1 time
   # source(file = file.path(base_path, "Scripts", "DataFormatting", "ChangingTheBehaviouralLabels.R")))
   
-  source(file = file.path(base_path, "Scripts", "DataFormatting", "GenerateFeatures.R"))
+  source(file = file.path(base_path, "Scripts", "ModelBuilding", "GenerateFeatures.R"))
 
   # repeat the entire process 3 times for cross-validation
   # assign IDs to their fold
@@ -143,9 +144,6 @@ source(file = file.path(base_path, "Scripts", "SequentialReport.R"))
 # Comparing the comparisons -----------------------------------------------
 source(file = file.path(base_path, "Scripts", "Comparisons", "ComparingComparisons.R"))
 
-
-# Ecological CaseStudy ----------------------------------------------------
-source(file = file.path(base_path, "Scripts", "CaseStudy", "GenerateEcologicalPredictions.R"))
-source(file = file.path(base_path, "Scripts", "CaseStudy", "CaseStudySmoothing.R"))
-source(file = file.path(base_path, "Scripts", "CaseStudy", "CaseStudyComparison.R"))
+# Make plots for the smoothing methods ------------------------------------
+source(file = file.path(base_path, "Scripts", "Comparisons", "SmoothingPlots.R"))
 

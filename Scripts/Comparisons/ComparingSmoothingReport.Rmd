@@ -23,7 +23,8 @@ metrics_list <- list.files(
 
 metrics <- lapply(metrics_list, function(file) {
   fread(file) %>%
-    mutate(smoothing_type = basename(file)) %>%
+    mutate(smoothing_type = basename(file),
+           rep_id = str_split(tools::file_path_sans_ext(basename(file)), "_")[[1]][3]) %>%
     rename(Activity = 1) # rename to Activity in all cases
 })
 
@@ -41,11 +42,8 @@ metrics <- metrics %>%
 
 # add levels so its easier to plot later
 metrics$smoothing_type <- factor(metrics$smoothing_type, levels = c("No", "Mode", "Duration", "Transition", "HMM", "Bayesian"))
-
-print(metrics %>% dplyr::filter(Activity == "Macro-Average"))
 ```
 
-Step 2 is to compare these results. Not all trials will have all types, so just compare what's there.
 ```{r compare}
 # its hard to make any one single judgement, so I can make a plot for now
 # 
@@ -56,29 +54,46 @@ metrics_long <- metrics %>%
 
 fwrite(metrics_long, file.path(base_path, "Output", species, "all_smoothed_metrics.csv"))
 
-# # Plot
-# ggplot(metrics_long, aes(x = Activity, y = Score, fill = smoothing_type)) +
-#   geom_boxplot(stat = "identity", size = 3, shape = 21, colour = "white") +
-#   facet_wrap(~ Metric, scales = "free_y", ncol = 2) +
-#   scale_fill_manual(values = my_colours) +
-#   my_theme() +
-#   labs(x = "Activity", y = "Score", fill = "Smoothing Type") +
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-
-print("removed this section for now")
-
 ```
 
-```{r simp_plot, fig.width = 6, fig.height = 6}
+```{r simp_plot, fig.width = 20, fig.height = 20}
 # and a simplified plot as 
-simplified_metrics <- metrics_long %>% dplyr::filter(Activity == "Macro-Average")
+simplified_metrics <- metrics_long #%>% dplyr::filter(Activity == "Macro-Average")
 ggplot(simplified_metrics, aes(x = smoothing_type, y = Score, fill = smoothing_type)) +
   geom_boxplot() +
-  facet_wrap(~ Metric, scales = "free_y", ncol = 2) +
+  facet_wrap(Activity~ Metric, scales = "free_y", nrow = length(unique(simplified_metrics$Activity))) +
   scale_fill_manual(values = my_colours) +
   my_theme() +
   labs(x = "Smoothing Method", y = "Score", fill = "Smoothing Type") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+And now make another version of that:
+```{r fig.width = 20, fig.height = 20}
+setDT(simplified_metrics)
+baseline <- simplified_metrics[
+  smoothing_type == "No",
+  .(Activity, rep_id, Metric, baseline = Score)
+]
+df <- merge(
+  simplified_metrics,
+  baseline,
+  by = c("Activity", "rep_id", "Metric"),
+  all.x = TRUE
+)
+df[, relative_change := Score - baseline]
+
+# now plot that
+df <- df %>% dplyr::filter(!smoothing_type == "No")
+ggplot(df, aes(x = smoothing_type, y = relative_change, fill = smoothing_type)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 0, linetype = "dotted", colour = "black") +
+  my_theme() +
+  scale_fill_manual(values = my_colours) +
+  labs(x = "Smoothing Type", y = "Relative change to F1 Score") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(Activity~ Metric, nrow = length(unique(simplified_metrics$Activity))) +
+  theme(legend.position = "none")
 
 ```
