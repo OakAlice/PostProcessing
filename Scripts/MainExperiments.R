@@ -2,8 +2,8 @@
 # sourcing for experiments
 set.seed(1000)
 
-# base_path <- "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
-base_path <- "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
+base_path <- "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
+#base_path <- "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
 
 #install.packaged("pacman")
 pacman::p_load(
@@ -56,12 +56,14 @@ sample_rates <- list(Galea_Cat = 50,
                      Clemente_Echidna = 10
                      )
 
+# all_species <- c("Mauny_Goat")
+
 # Functions ---------------------------------------------------------------
 source(file = file.path(base_path, "Scripts", "ModelBuilding", "GenerateFeatures_Functions.R"))
 source(file = file.path(base_path, "Scripts", "SequenceIdentificationFunctions.R"))
 source(file = file.path(base_path, "Scripts", "PerformanceTestingFunctions.R"))
 source(file = file.path(base_path, "Scripts", "PlottingFunctions.R"))
-source(file = file.path(base_path, "Scripts", "SmoothingFunctions.R"))
+source(file = file.path(base_path, "Scripts", "SmoothingMethods", "SmoothingFunctions.R"))
 
 # Dataset Characteristics -------------------------------------------------
 # define traits from each of the datasets

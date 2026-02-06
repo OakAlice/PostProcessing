@@ -150,7 +150,7 @@ for (individual in individuals){
   })
 }
     
-  # Make predictions on each ------------------------------------------------
+    # Make predictions on each ------------------------------------------------
   unlabelled_features <- list.files(file.path(base_path, "CaseStudy", species, "FeatureData"), full.names = TRUE, pattern = ".csv", recursive = TRUE)
   predictions <- lapply(unlabelled_features, function(x){
     dat <- fread(x)

@@ -1,108 +1,183 @@
 # Ecological Testing Functions --------------------------------------------
 # the other way to test the performance of the model is to see how it answers an 
 # ecological question of choice
+# Here we are using the labelled and unlabelled data from the koala and comparing performance
+# in the known and unknown scenarios
 
+target_activity <- "Locomotion"
 
-# Here I will compare questions about the behavioural profile of the case study dataset
-# when using the different post-processing methods.
-# load in the different datasets
-smoothed_files <- list.files(file.path(base_path, "CaseStudy", species, "Predictions"), 
-                             pattern = "Smoothing_predictions.csv", 
-                             full.names = TRUE)
-
-target_activity <- ifelse(species == "Sparkes_Koala", "Locomotion", "3")
+# Functions ---------------------------------------------------------------
+# summarise the behaviours
+summarise_behaviour_sequences <- function(unlabelled_files, target_activity) {
   
-behavioural_summaries <- lapply(smoothed_files, function(x){
-  
-  smoothing_type <- gsub("Smoothing", "", str_split(basename(x), "_")[[1]][1])
-  
-  dt <- fread(x) %>%
-    select(ID, Time, sequence, smoothed_class)
-  setDT(dt)
-
-  # as number of seuqneces per ID
-  # Order and define sequences
-  setorder(dt, ID, Time)
-  dt[, previous_class := shift(smoothed_class, type = "lag"), by = ID]
-  dt[, change_point := fifelse(previous_class != smoothed_class, 1L, 0L)]
-  dt[is.na(change_point), change_point := 0L]
-  dt[, sequence := cumsum(change_point), by = ID]
-
-  # Extract target behaviour sequences
-  seq_dt <- dt[smoothed_class == target_activity, .(
-    behaviour = smoothed_class[1],
-    count = .N,
-    duration = as.numeric(max(Time) - min(Time), units = "secs"),
-    start_time = min(Time)
-  ), by = .(ID, sequence)]
-  
-  # Count how many sequences occur for each ID
-  daily_seq_counts <- seq_dt[, .N, by = ID]
-  
-  # Summarise across days
-  sequence_summary <- daily_seq_counts[
-    , .(
-      mean_frequency = round(mean(N),2),
-      sd_frequency = round(sd(N),2),
-      smoothing_style = smoothing_type,
-      behaviour = target_activity
+  dt <- lapply(unlabelled_files, function(x) {
+    smoothing_type <- gsub(
+      "Smoothing", "",
+      stringr::str_split(basename(x), "_")[[1]][1]
     )
-  ]
+    dt <- fread(x) %>% 
+      select(any_of(c("ID", "Time", "smoothed_class", "true_class")))
+    dt$smoothing_type <- smoothing_type
+    dt
+  })
+  dt <- rbindlist(dt)
+  dt <- as.data.frame(dt)
   
-  sequence_durations <- seq_dt[
-    , .(
-      mean_duration = round(mean(duration),2),
-      sd_duration = round(sd(duration),2)
+  if ("true_class" %in% colnames(dt)){
+    true_classes <- dt %>%
+      dplyr::filter(smoothing_type == "No") %>% 
+      dplyr::select(ID, Time, true_class) %>% 
+      dplyr::mutate(
+        smoothed_class = true_class,
+        smoothing_type = "TrueClass"
+      )
+    dt <- dplyr::bind_rows(dt, true_classes)
+  }
+  
+  # define the sequences
+  dt <- identify_sequences(dt, max_break = ifelse(sample_rates[[species]] > 1, 3, 6)) # based on window duration and buffer
+  dt <- dt %>%
+    group_split(smoothing_type) %>%
+    lapply(identify_events, class_col = "smoothed_class") %>%
+    bind_rows()
+  
+  # Extract target behaviour sequences and find the means
+  events <- dt %>%
+    filter(smoothed_class == target_activity) %>%
+    group_by(ID, smoothing_type, event) %>%
+    summarise(
+      Duration = n() * 2,
+      .groups = "drop"
     )
-  ]
+  per_individual <- events %>%
+    group_by(ID, smoothing_type) %>%
+    summarise(
+      freq = n(),
+      mean_duration = mean(Duration),
+      .groups = "drop"
+    )
+  summary_stats <- per_individual %>%
+    group_by(smoothing_type) %>%
+    summarise(
+      mean_freq = mean(freq),
+      sd_freq   = sd(freq),
+      mean_duration = mean(mean_duration),
+      sd_duration   = sd(mean_duration),
+      .groups = "drop"
+    )
+
+  return(summary_stats)
+}
+
+# make the plot
+make_smoothing_plot <- function(smoothed_files, output_name) {
   
-  summary <- cbind(sequence_summary, sequence_durations)
-  summary
-})
-behavioural_summaries <- rbindlist(behavioural_summaries)
-
-
-# making the comparison plot
-behavioural_plotdt <- lapply(smoothed_files, function(x){
-  smoothing_type <- gsub("Smoothing", "", str_split(basename(x), "_")[[1]][1])
-  dt <- fread(x) %>%
-    select(ID, Time, sequence, smoothed_class) %>%
-    mutate(smoothing = smoothing_type)
-  dt
-})
-behavioural_plotdt <- rbindlist(behavioural_plotdt)
-behavioural_plotdt$smoothing <- factor(behavioural_plotdt$smoothing, 
-                                       levels = c("No", "Mode", "Duration", "Transition", "HMM", "Bayesian"))
-plotdata <- behavioural_plotdt #%>% dplyr::filter(smoothing == "Bayesian", ID == "Angelina")
-
-# make a grid plot
-# should be fill but that wasn't working so had to use colour as a work around 
-casestudy_smooths <- ggplot(plotdata,
-                            aes(x = Time, y = as.factor(1), colour = as.factor(smoothed_class))) +
-  geom_tile() +
-  labs(colour = "Activity") +
-  my_theme() +
-  theme(axis.title = element_blank(), 
-        axis.text = element_blank(),
-        axis.ticks = element_blank(),
-        legend.position = "bottom") +
-  scale_colour_manual(values = c(
+  fill_colours = c(
     "coral", "goldenrod2", "khaki2", "aquamarine3",
     "powderblue", "orchid2", "plum", "lightpink1", 
     "lightcoral", "slateblue3", "thistle3", "sienna1"
-  )) +
-  facet_grid(
-    rows = vars(smoothing),
-    cols = vars(ID),
-    scales = "free",
-    drop = TRUE
   )
+  
+  # Load and combine smoothed predictions
+  behavioural_plotdt <- lapply(smoothed_files, function(x) {
+    smoothing_type <- gsub("Smoothing", "", stringr::str_split(basename(x), "_")[[1]][1])
+    
+    fread(x) %>%
+      dplyr::select(any_of(c("ID", "Time", "smoothed_class", "true_class"))) %>%
+      dplyr::mutate(smoothing = smoothing_type)
+  })
+  behavioural_plotdt <- data.table::rbindlist(behavioural_plotdt)
+  
+  behavioural_plotdt$smoothing <- factor(behavioural_plotdt$smoothing, 
+                                         levels = c("No", "Mode", "Duration", "Transition", "HMM", "Bayesian"))
+  
+  # Add true labels as separate "smoothing" level
+  if ("true_class" %in% colnames(behavioural_plotdt)){
+    true_classes <- behavioural_plotdt %>%
+      dplyr::filter(smoothing == "No") %>% 
+      dplyr::select(ID, Time, true_class) %>% 
+      dplyr::mutate(
+        smoothed_class = true_class,
+        smoothing = "TrueClass"
+      )
+    
+    behavioural_plotdt <- rbind(behavioural_plotdt, true_classes, use.names = TRUE)
+    
+    behavioural_plotdt$smoothing <- factor(behavioural_plotdt$smoothing,
+      levels = c("TrueClass", "No", "Mode", "Duration", "Transition", "HMM", "Bayesian")
+    )
+  }
+  
+  # plot it
+  smoothing_plot <- ggplot(behavioural_plotdt,
+    aes(x = Time, y = as.factor(1), fill = as.factor(smoothed_class))
+  ) +
+    geom_tile() +
+    labs(fill = "Activity") +
+    my_theme() +
+    theme(
+      axis.title  = element_blank(),
+      axis.text   = element_blank(),
+      axis.ticks  = element_blank(),
+      legend.position = "bottom"
+    ) +
+    scale_fill_manual(values = fill_colours) +
+    facet_grid(
+      rows = vars(smoothing),
+      cols = vars(ID),
+      scales = "free",
+      drop = TRUE
+    )
+  
+  # svae it
+  out_path <- file.path(
+    base_path, "CaseStudy", "Sparkes_Koala",
+    paste0(output_name, "_smoothing_plot.png")
+  )
+  
+  ggsave(
+    filename = out_path,
+    plot = smoothing_plot,
+    width = 40,
+    height = 20,
+    units = "cm",
+    dpi = 300,
+    bg = "white"
+  )
+}
 
-ggsave(
-  filename = file.path(base_path, "CaseStudy", species, "CaseStudy_smoothing_plot.png"),
-  plot = casestudy_smooths,
-  width = 40, height = 20,
-  units = "cm",
-  dpi = 300,
-  bg = "white"
+
+# Unlabelled data ---------------------------------------------------------
+# load in the files
+unlabelled_files <- list.files(file.path(base_path, "CaseStudy", "Sparkes_Koala", "Predictions"), 
+                               pattern = "Smoothing_predictions.csv", 
+                               full.names = TRUE)
+# make the summaries
+unlabelled_behavioural_summaries <- summarise_behaviour_sequences(
+  unlabelled_files = unlabelled_files,
+  target_activity  = target_activity
 )
+fwrite(unlabelled_behavioural_summaries, file.path(base_path, "CaseStudy", "Sparkes_Koala", "UnlabelledWalkingSummries.csv"))
+
+# make the plot
+make_smoothing_plot(smoothed_files = unlabelled_files, 
+                                     output_name = "Unlabelled"
+                                     )
+
+# Labelled data -----------------------------------------------------------
+# load in the labelled files
+labelled_files <- list.files(file.path(base_path, "Output", "Sparkes_Koala"), 
+                                      pattern = "_predictions_", 
+                                      full.names = TRUE, recursive = TRUE)
+# make the summaries
+behavioural_summaries <- summarise_behaviour_sequences(
+  unlabelled_files = labelled_files,
+  target_activity  = target_activity
+)
+fwrite(behavioural_summaries, file.path(base_path, "CaseStudy", "Sparkes_Koala", "LabelledWalkingSummries.csv"))
+# make the plot
+make_smoothing_plot(smoothed_files = labelled_files, 
+                                     output_name = "Labelled"
+                                     )
+  
+
