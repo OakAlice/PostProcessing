@@ -148,37 +148,38 @@ full_df <- merge(df, stat_file, by = "Species")
 ```
 
 ```{r some stats}
+# scale everything
+full_df <- full_df %>%
+  mutate(across(
+    c(mean_transitions, total_transitions, Num_Activities),
+    ~ scale(.x, center = TRUE, scale = TRUE)[,1]
+  ))
 
 full_model <- lmer(
-  relative_change ~ 0 + smoothing_type * transition_rate * multi_behaviour * Num_Activities * total_transitions +
+  relative_change ~ 0 +
+    smoothing_type *
+      (mean_transitions +
+       multi_behaviour +
+       Num_Activities) +
+    (1 + smoothing_type | Species) + 
+    (1 | Species:rep_id),
+  data = full_df,
+  REML = FALSE
+)
+
+model_null <- lmer(
+  relative_change ~ 0 + smoothing_type +
     (1 | Species / rep_id),
   data = full_df, REML = FALSE
 )
-#summary(full_model)
 
-simple_model <- lmer(
-  relative_change ~ 0 + smoothing_type * transition_rate +
-    smoothing_type * multi_behaviour +
-    smoothing_type * total_transitions +
-    smoothing_type * Num_Activities +
-    (1 | Species / rep_id),
-  data = full_df, REML = FALSE
-)
-#summary(simple_model)
+anova(model_null, full_model)
 
-very_simple_model <- lmer(
-  relative_change ~ 0 + smoothing_type + transition_rate + multi_behaviour + total_transitions + Num_Activities +
-    (1 | Species / rep_id),
-  data = full_df, REML = FALSE
-)
-# summary(very_simple_model)
 
-anova(full_model, simple_model, very_simple_model)
+summary(full_model)
 
-sig_terms <- summary(simple_model)$coefficients %>%
-  as.data.frame() %>%
-  rownames_to_column("term") %>%
-  filter(`Pr(>|t|)` < 0.05)
-sig_terms
+library(MuMIn)
+r.squaredGLMM(full_model)
+
 
 ```

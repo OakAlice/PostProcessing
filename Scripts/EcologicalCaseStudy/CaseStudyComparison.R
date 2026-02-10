@@ -4,8 +4,6 @@
 # Here we are using the labelled and unlabelled data from the koala and comparing performance
 # in the known and unknown scenarios
 
-target_activity <- "Locomotion"
-
 # Functions ---------------------------------------------------------------
 # summarise the behaviours
 summarise_behaviour_sequences <- function(unlabelled_files, target_activity) {
@@ -108,14 +106,21 @@ make_smoothing_plot <- function(smoothed_files, output_name) {
     )
   }
   
+  behavioural_plotdt <- behavioural_plotdt %>%
+    arrange(ID, smoothing, Time) %>%
+    group_by(ID, smoothing) %>%
+    mutate(rel_time = row_number()) %>%
+    ungroup()
+  
   # plot it
   smoothing_plot <- ggplot(behavioural_plotdt,
-    aes(x = Time, y = as.factor(1), fill = as.factor(smoothed_class))
+    aes(x = rel_time, y = as.factor(1), fill = as.factor(smoothed_class))
   ) +
     geom_tile() +
     labs(fill = "Activity") +
     my_theme() +
     theme(
+      strip.text = element_text(size = 14),
       axis.title  = element_blank(),
       axis.text   = element_blank(),
       axis.ticks  = element_blank(),
@@ -146,6 +151,8 @@ make_smoothing_plot <- function(smoothed_files, output_name) {
   )
 }
 
+target_activity <- "Locomotion"
+species <- "Sparkes_Koala"
 
 # Unlabelled data ---------------------------------------------------------
 # load in the files
