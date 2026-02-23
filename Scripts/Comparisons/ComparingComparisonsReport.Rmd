@@ -13,6 +13,8 @@ knitr::opts_chunk$set(echo = FALSE, fig.width = 8, fig.height = 5)
 This is the report to compare the comparisons between the species datasets.
 
 ```{r bind, include = FALSE}
+# Firstly, loading in the files and creating the collated performance file
+
 # base_path <- "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
 files <- list.files(file.path(base_path, "Output"), pattern = "all_smoothed_metrics.csv", full.names = TRUE, recursive = TRUE)
 

@@ -77,10 +77,8 @@ for (species in all_species){
   print(species)
   species <- basename(species)
   
-  source(file = file.path(base_path, "Scripts", "DataFormatting", paste0(species, "_Formatting.R")))
-  
-  # I later decided I wanted to change the behavioural labels so ran this 1 time
-  # source(file = file.path(base_path, "Scripts", "DataFormatting", "ChangingTheBehaviouralLabels.R")))
+  # data formatting is undertaken in a different repository
+  # explained in the readme
   
   source(file = file.path(base_path, "Scripts", "ModelBuilding", "GenerateFeatures.R"))
 
