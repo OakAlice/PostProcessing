@@ -54,52 +54,58 @@ Firstly I'll look at how much improvement there was overall
 ```{r}
 df <- data %>% dplyr::filter(Activity == "Macro-Average", Metric == "F1")
 # and also do it as relative from the control
-setDT(df)
-
 # Get NoSmoothing scores by Species
-baseline <- df[
-  smoothing_type == "No",
-  .(Species, rep_id, baseline = Score)
-]
-df <- merge(
-  df,
-  baseline,
-  by = c("Species", "rep_id"),
-  all.x = TRUE
-)
-df[, relative_change := Score - baseline]
-df_sum <- df %>%
+baseline <- df %>%
+  filter(smoothing_type == "No") %>%
+  select(Species, rep_id, baseline = Score)
+
+df_rel <- df %>%
+  left_join(baseline, by = c("Species", "rep_id")) %>%
+  mutate(relative_change = Score - baseline)
+
+df_sum <- df_rel %>%
   filter(smoothing_type != "No") %>%
   group_by(Species, smoothing_type) %>%
   summarise(
     mean_rc = mean(relative_change, na.rm = TRUE),
     se_rc   = sd(relative_change, na.rm = TRUE) / sqrt(n())
   )
-
 ```
 
 ```{r compare, fig.width = 8, fig.height = 8}
 # its hard to make any one single judgement, so I can make a plot for now
+# Summarise mean and 95% CI
+summary_df <- df_rel %>%
+  group_by(Species, smoothing_type) %>%
+  summarise(
+    n = n(),
+    mean_rel = mean(relative_change, na.rm = TRUE),
+    se = sd(relative_change, na.rm = TRUE) / sqrt(n),
+    ci = 1.96 * se, # gives us the confidence intervals (i think)
+    .groups = "drop"
+  )
 
-# Plot so that control is more obvious
-ggplot(df, aes(x = smoothing_type, y = Score, fill = smoothing_type)) +
-  geom_boxplot() +
-  my_theme() +
-  scale_fill_manual(values = my_colours) +
-  labs(x = "Activity", y = "Score", fill = "Smoothing Type") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  facet_wrap(~Species)
+# this is 0 every time, so replace with a flat line
+df <- summary_df %>% dplyr::filter(!smoothing_type == "No")
 
-df <- df %>% dplyr::filter(!smoothing_type == "No")
-ggplot(df, aes(x = smoothing_type, y = relative_change, fill = smoothing_type)) +
-  geom_boxplot() +
+# and plot it
+ggplot(df,
+       aes(x = smoothing_type,
+           y = mean_rel,
+           colour = smoothing_type)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = mean_rel - ci,
+                    ymax = mean_rel + ci),
+                width = 0.5) +
   geom_hline(yintercept = 0, linetype = "dotted", colour = "black") +
   my_theme() +
-  scale_fill_manual(values = my_colours) +
-  labs(x = "Smoothing Type", y = "Relative change to F1 Score") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  facet_wrap(~Species, ncol = 5) +
-  theme(legend.position = "none")
+  scale_colour_manual(values = my_colours) +
+  labs(x = "Smoothing Type",
+       y = "Mean change in F1 (relative to No smoothing)",
+       fill = "Smoothing Type") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none") +
+  facet_wrap(~Species, ncol = 3)
 
 ```
 
@@ -110,7 +116,7 @@ Within species
 species <- unique(df$Species)
 all_stats <- data.frame()
 for (x in species){
-  dat <- df %>% dplyr::filter(Species == x, 
+  dat <- df_rel %>% dplyr::filter(Species == x, 
                               !smoothing_type == "No")
   mod <- lm(
     relative_change ~ 0 + smoothing_type + (1 | rep_id),
@@ -135,7 +141,7 @@ sig_stats
 Across species
 ```{r}
 # all species
-simple_model <- lmer(relative_change ~ 0 + smoothing_type + (1|Species/rep_id), data = df)
+simple_model <- lmer(relative_change ~ 0 + smoothing_type + (1|Species/rep_id), data = df_rel)
 summary(simple_model)
 ```
 
@@ -144,7 +150,7 @@ Step 3 is to correlate this with the sequential stats I was able to draw out in 
 ```{r extracting stat data}
 stat_file <- fread(file.path(base_path, "Output", "All_sequence_stats.csv"))
 
-full_df <- merge(df, stat_file, by = "Species")
+full_df <- merge(df_rel, stat_file, by = "Species")
 ```
 
 ```{r some stats}
@@ -180,6 +186,5 @@ summary(full_model)
 
 library(MuMIn)
 r.squaredGLMM(full_model)
-
 
 ```
