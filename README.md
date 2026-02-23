@@ -39,4 +39,4 @@ Arranged roughly in the order you'd need them.
     - `CaseStudySmoothing.R`: Smooth the predictions
     - `CaseStudyComparison.R`: Answer the ecological question with each of the smoothing results
 - **Data/**
-    - Hard to upload the data due to file sizes and git limits but uploaded one data example (data sourced from (Ferdinandy et al., 2020)[https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0236092])
+    - Hard to upload the data due to file sizes and git limits but uploaded one data example (data sourced from [Ferdinandy et al., 2020](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0236092])
