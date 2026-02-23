@@ -16,7 +16,6 @@ pacman::p_load(
          future.apply,
          HMM,
          torch,
-         tictoc,
          zoo,
          lubridate,
          rlang,
@@ -34,12 +33,12 @@ pacman::p_load(
 # keep_files <- list.files(file.path(base_path, "Data"), pattern = "Formatted_raw_data.csv", full.names = TRUE, recursive = TRUE)
 # file.remove(old_files)
 
-# Define variables for this run -------------------------------------------
+# Define variables ---------------------------------------------------------
 overlap <- 0 # same for every dataset
 available_axes <- c("X", "Y", "Z") # annopying variable I haven't gotten rid of yet
 
 all_species <- list.dirs(file.path(base_path, "Data"), recursive = FALSE)
-sample_rates <- list(Galea_Cat = 50,
+sample_rates <- list(Galea_Cat = 50, # could find a better way to store this, maybe read from csv...?
                      Dunford_Cat = 40,
                      Jeantet_Turtle = 20,
                      Ladds_Seal = 25,
@@ -65,20 +64,11 @@ source(file = file.path(base_path, "Scripts", "PerformanceTestingFunctions.R"))
 source(file = file.path(base_path, "Scripts", "PlottingFunctions.R"))
 source(file = file.path(base_path, "Scripts", "SmoothingMethods", "SmoothingFunctions.R"))
 
-# Dataset Characteristics -------------------------------------------------
-# define traits from each of the datasets
-# source(file = file.path(base_path, "Scripts", "DataFormatting", "DatasetCharacteristics.R"))
-
-# Format Data -------------------------------------------------------------
-# collecting the data from various sources and formatting it to standardised structure
-
+# run the loop for all species
 for (species in all_species){ 
   
   print(species)
   species <- basename(species)
-  
-  # data formatting is undertaken in a different repository
-  # explained in the readme
   
   source(file = file.path(base_path, "Scripts", "ModelBuilding", "GenerateFeatures.R"))
 
@@ -142,8 +132,10 @@ for (species in all_species){
 source(file = file.path(base_path, "Scripts", "SequentialReport.R"))
 
 # Comparing the comparisons -----------------------------------------------
+# Generates the results R markdown
 source(file = file.path(base_path, "Scripts", "Comparisons", "ComparingComparisons.R"))
 
 # Make plots for the smoothing methods ------------------------------------
+# This is just for the paper
 source(file = file.path(base_path, "Scripts", "Comparisons", "SmoothingPlots.R"))
 

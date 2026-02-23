@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = FALSE, fig.width = 8, fig.height = 5)
 This is the report to compare the comparisons between the species datasets.
 
 ```{r bind, include = FALSE}
-# Firstly, loading in the files and creating the collated performance file
+# Firstly, loading in the individual files and creating the collated performance file
 
 # base_path <- "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
 files <- list.files(file.path(base_path, "Output"), pattern = "all_smoothed_metrics.csv", full.names = TRUE, recursive = TRUE)
@@ -37,7 +37,7 @@ data$Species <- factor(data$Species, levels = c(unique(data$Species)))
 fwrite(data, file.path(base_path, "Output", "collated_performance.csv"))
 ```
 
-## Part One: Base Performance
+## Base Performance
 Looking at base performance.
 ```{r}
 means <- data %>% dplyr::filter(Activity == "Macro-Average", Metric == "F1", smoothing_type == "No") %>%
@@ -51,9 +51,9 @@ min(means$Score)
 
 ```
 
-## Part Two: Overall Post-processing effect
-Firstly I'll look at how much improvement there was overall
-```{r}
+## Overall effect
+Firstly I'll look at how much improvement there was overall (across all datasets)
+```{r Stats on the overall effect}
 df <- data %>% dplyr::filter(Activity == "Macro-Average", Metric == "F1")
 # and also do it as relative from the control
 # Get NoSmoothing scores by Species
@@ -65,17 +65,20 @@ df_rel <- df %>%
   left_join(baseline, by = c("Species", "rep_id")) %>%
   mutate(relative_change = Score - baseline)
 
-df_sum <- df_rel %>%
-  filter(smoothing_type != "No") %>%
-  group_by(Species, smoothing_type) %>%
-  summarise(
-    mean_rc = mean(relative_change, na.rm = TRUE),
-    se_rc   = sd(relative_change, na.rm = TRUE) / sqrt(n())
-  )
+# do some stats here (note that No is set to the reference level)
+
+# v1: what I thought was right
+simple_model <- lmer(relative_change ~ smoothing_type + (1|Species/rep_id), data = df_rel)
+summary(simple_model)
+# yay significant results
+
+# v2: what Dave suggested
+dave_model <- lmer(relative_change ~ smoothing_type * Species + (1|rep_id), data = df_rel)
+summary(dave_model)
+# frighteningly... bayesian isnt significant anymore... oh no... this is bad news for me
 ```
 
-```{r compare, fig.width = 8, fig.height = 8}
-# its hard to make any one single judgement, so I can make a plot for now
+```{r plots on the overall effect, fig.width = 8, fig.height = 8}
 # Summarise mean and 95% CI
 summary_df <- df_rel %>%
   group_by(Species, smoothing_type) %>%
@@ -86,12 +89,8 @@ summary_df <- df_rel %>%
     ci = 1.96 * se, # gives us the confidence intervals (i think)
     .groups = "drop"
   )
-
-# this is 0 every time, so replace with a flat line
-df <- summary_df %>% dplyr::filter(!smoothing_type == "No")
-
-# and plot it
-ggplot(df,
+# this is 0 every time, so replace with a flat line for visually cleaner
+ggplot(summary_df %>% dplyr::filter(!smoothing_type == "No"),
        aes(x = smoothing_type,
            y = mean_rel,
            colour = smoothing_type)) +
@@ -108,20 +107,18 @@ ggplot(df,
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         legend.position = "none") +
   facet_wrap(~Species, ncol = 3)
-
 ```
 
-## Part Four: Within species
-Within species
-```{r}
+## Within species
+Breaking it down and looking at each species individually.
+```{r stats on the individual species}
 # per species
-species <- unique(df$Species)
+species <- unique(df_rel$Species)
 all_stats <- data.frame()
 for (x in species){
-  dat <- df_rel %>% dplyr::filter(Species == x, 
-                              !smoothing_type == "No")
+  dat <- df_rel %>% dplyr::filter(Species == x)
   mod <- lm(
-    relative_change ~ 0 + smoothing_type + (1 | rep_id),
+    relative_change ~ smoothing_type + (1 | rep_id), # when I removed the 0+ the sigificant dissapeared 0_0
     data = dat
   )
 
@@ -139,24 +136,15 @@ sig_stats <- all_stats %>% dplyr::filter(sig == TRUE)
 sig_stats
 ```
 
-## Part Five: Finding covariates to explain variation
-Across species
-```{r}
-# all species
-simple_model <- lmer(relative_change ~ 0 + smoothing_type + (1|Species/rep_id), data = df_rel)
-summary(simple_model)
-```
-
-Step 3 is to correlate this with the sequential stats I was able to draw out in the sequence report on the training data. Why are some datasets positively affected while others aren't?
-
+##  Finding covariates to explain variation
+Why are some datasets affected while others aren't? Does it have something to do with sequence stats in the training data?
 ```{r extracting stat data}
 stat_file <- fread(file.path(base_path, "Output", "All_sequence_stats.csv"))
-
 full_df <- merge(df_rel, stat_file, by = "Species")
 ```
 
 ```{r some stats}
-# scale everything
+# scale everything so one variable doesnt have much bigger effect
 full_df <- full_df %>%
   mutate(across(
     c(mean_transitions, total_transitions, Num_Activities),
@@ -164,26 +152,23 @@ full_df <- full_df %>%
   ))
 
 full_model <- lmer(
-  relative_change ~ 0 +
-    smoothing_type *
+  relative_change ~
+    smoothing_type * Species *
       (mean_transitions +
        multi_behaviour +
        Num_Activities) +
-    (1 + smoothing_type | Species) + 
-    (1 | Species:rep_id),
+    (1 | rep_id),
   data = full_df,
   REML = FALSE
 )
 
 model_null <- lmer(
-  relative_change ~ 0 + smoothing_type +
+  relative_change ~ smoothing_type +
     (1 | Species / rep_id),
   data = full_df, REML = FALSE
 )
 
 anova(model_null, full_model)
-
-
 summary(full_model)
 
 library(MuMIn)
