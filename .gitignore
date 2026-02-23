@@ -2,7 +2,6 @@
 Manuscripts/
 Notes/
 .obsidian/
-Output/
 CaseStudy/
 
 # leave one example of data
@@ -10,6 +9,11 @@ CaseStudy/
 !/Data/Ferdinandy_Dog/
 !/Data/Ferdinandy_Dog/**
 
+# put in the output sheets
+/Output/*
+!/Output/All_sequence_stats.csv
+!/Output/collated_performance.csv
+!/Output/WithinSpeciesStats.csv
 
 # Ignore R history files
 *.Rhistory

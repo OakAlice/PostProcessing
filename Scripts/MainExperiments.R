@@ -2,8 +2,8 @@
 # sourcing for experiments
 set.seed(1000)
 
-base_path <- "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
-#base_path <- "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
+#base_path <- "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
+base_path <- "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
 
 #install.packaged("pacman")
 pacman::p_load(
@@ -41,7 +41,7 @@ available_axes <- c("X", "Y", "Z") # annopying variable I haven't gotten rid of 
 all_species <- list.dirs(file.path(base_path, "Data"), recursive = FALSE)
 sample_rates <- list(Galea_Cat = 50,
                      Dunford_Cat = 40,
-                     Ferdinandy_Dog = 100,
+                     Jeantet_Turtle = 20,
                      Ladds_Seal = 25,
                      Maekawa_Gull = 25,
                      Smit_Cat = 30,
@@ -56,7 +56,7 @@ sample_rates <- list(Galea_Cat = 50,
                      Clemente_Echidna = 10
                      )
 
-# all_species <- c("Mauny_Goat")
+# all_species <- c("Jeantet_Turtle")
 
 # Functions ---------------------------------------------------------------
 source(file = file.path(base_path, "Scripts", "ModelBuilding", "GenerateFeatures_Functions.R"))
