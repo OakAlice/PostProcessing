@@ -1,5 +1,5 @@
 # Post-Processing
-In animal accelerometer-based behavioural classification research, the majority of the attention has been placed on the collection of the data and the building of the models with relatively little attention given to what to do with the data once we have it. In this chapter I am going to experiment with using sequential context information to improve classification performance. The idea is similar to that which is already used widely in speech-to-text recognition (example below).
+In animal accelerometer-based behavioural classification research, the majority of the attention has been placed on the collection of the data and the building of the models with relatively little attention given to what to do with the data once we have it. In this project, we use information inherent in the training data (sequential order of behavioural observation) to place predictions in context and account for classifier error. The idea is similar to that which is already used widely in speech-to-text recognition (example below).
 
 ![The concept behind post-processing](post_processing_idea_langauge.png)
 
