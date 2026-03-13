@@ -71,10 +71,7 @@ summarise_behaviour_sequences <- function(unlabelled_files, target_activity) {
 make_smoothing_plot <- function(smoothed_files, output_name) {
   
   fill_colours = c(
-    "coral", "goldenrod2", "khaki2", "aquamarine3",
-    "powderblue", "orchid2", "plum", "lightpink1", 
-    "lightcoral", "slateblue3", "thistle3", "sienna1"
-  )
+    "coral", "khaki2", "aquamarine3", "powderblue", "orchid2" )
   
   # Load and combine smoothed predictions
   behavioural_plotdt <- lapply(smoothed_files, function(x) {
@@ -109,23 +106,28 @@ make_smoothing_plot <- function(smoothed_files, output_name) {
   behavioural_plotdt <- behavioural_plotdt %>%
     arrange(ID, smoothing, Time) %>%
     group_by(ID, smoothing) %>%
-    mutate(rel_time = row_number()) %>%
+    mutate(
+      rel_time = row_number() * 2,
+      rel_time_hr = rel_time / ifelse(output_name == "Unlabelled", 3600, 60)
+    ) %>%
     ungroup()
   
   # plot it
-  smoothing_plot <- ggplot(behavioural_plotdt,
-    aes(x = rel_time, y = as.factor(1), fill = as.factor(smoothed_class))
+  smoothing_plot <- ggplot(
+    behavioural_plotdt,
+    aes(x = rel_time_hr, y = as.factor(1), fill = as.factor(smoothed_class))
   ) +
     geom_tile() +
-    labs(fill = "Activity") +
+    labs(fill = "Activity", x = ifelse(output_name == "Unlabelled", "Time (hours)", "Time (minutes)")) +
     my_theme() +
     theme(
       strip.text = element_text(size = 14),
-      axis.title  = element_blank(),
-      axis.text   = element_blank(),
-      axis.ticks  = element_blank(),
+      axis.title.y  = element_blank(),
+      axis.text.y   = element_blank(),
+      axis.ticks.y  = element_blank(),
       legend.position = "bottom"
     ) +
+    scale_x_continuous(breaks = seq(0, max(behavioural_plotdt$rel_time_hr), by = ifelse(output_name == "Unlabelled", 2, 5))) +
     scale_fill_manual(values = fill_colours) +
     facet_grid(
       rows = vars(smoothing),
@@ -143,7 +145,7 @@ make_smoothing_plot <- function(smoothed_files, output_name) {
   ggsave(
     filename = out_path,
     plot = smoothing_plot,
-    width = 40,
+    width = 35,
     height = 20,
     units = "cm",
     dpi = 300,
@@ -151,7 +153,7 @@ make_smoothing_plot <- function(smoothed_files, output_name) {
   )
 }
 
-target_activity <- "Locomotion"
+target_activity <- "Foraging"
 species <- "Sparkes_Koala"
 
 # Unlabelled data ---------------------------------------------------------
@@ -164,13 +166,12 @@ unlabelled_behavioural_summaries <- summarise_behaviour_sequences(
   unlabelled_files = unlabelled_files,
   target_activity  = target_activity
 )
-fwrite(unlabelled_behavioural_summaries, file.path(base_path, "CaseStudy", "Sparkes_Koala", "UnlabelledWalkingSummries.csv"))
+fwrite(unlabelled_behavioural_summaries, file.path(base_path, "CaseStudy", "Sparkes_Koala", paste0("Unlabelled_", target_activity, "_Summries.csv")))
 
 # make the plot
 make_smoothing_plot(smoothed_files = unlabelled_files, 
                                      output_name = "Unlabelled"
                                      )
-
 # Labelled data -----------------------------------------------------------
 # load in the labelled files
 labelled_files <- list.files(file.path(base_path, "Output", "Sparkes_Koala"), 
@@ -181,10 +182,44 @@ behavioural_summaries <- summarise_behaviour_sequences(
   unlabelled_files = labelled_files,
   target_activity  = target_activity
 )
-fwrite(behavioural_summaries, file.path(base_path, "CaseStudy", "Sparkes_Koala", "LabelledWalkingSummries.csv"))
+fwrite(behavioural_summaries, file.path(base_path, "CaseStudy", "Sparkes_Koala", paste0("Labelled_", target_activity, "_Summries.csv")))
+       
 # make the plot
 make_smoothing_plot(smoothed_files = labelled_files, 
                                      output_name = "Labelled"
                                      )
   
+
+
+
+# Behavioural budgets -----------------------------------------------------
+fill_colours = c(
+  "coral", "khaki2", "aquamarine3", "powderblue", "orchid2" )
+
+dt <- lapply(labelled_files, function(x) {
+  smoothing_type <- gsub(
+    "Smoothing", "",
+    stringr::str_split(basename(x), "_")[[1]][1]
+  )
+  dt <- fread(x) %>% 
+    select(any_of(c("ID", "Time", "smoothed_class", "true_class")))
+  dt$smoothing_type <- smoothing_type
+  dt
+})
+dt <- rbindlist(dt)
+dt <- as.data.frame(dt)
+
+dt$smoothing_type <-factor(dt$smoothing_type,
+                           levels = c("TrueClass", "No", "Mode", "Duration", "Transition", "HMM", "Bayesian")
+)
+
+budget <- dt %>% 
+  group_by(ID, smoothed_class, smoothing_type) %>%
+  count()
+
+ggplot(budget, aes(x = smoothing_type, y = n, fill = smoothed_class)) +
+  geom_col(position = "stack") +
+  facet_wrap(~ID, scale = "free") + 
+  my_theme() +
+  scale_fill_manual(values = fill_colours)
 

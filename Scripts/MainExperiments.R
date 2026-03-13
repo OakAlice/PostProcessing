@@ -20,10 +20,7 @@ pacman::p_load(
          lubridate,
          rlang,
          tsfeatures,
-         lubridate,
-         effsize,
-         lme4,
-         lmerTest,
+         glmmTMB,
          rBayesianOptimization,
          ranger
         )

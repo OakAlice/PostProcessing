@@ -1,31 +1,36 @@
-# Script for initialising a markdown report comparing smoothings ----------
-# because my brain is a sieve, I want to make comparisons as easy as possible
-# last year Ryley did some amazing work figuring out how to make automated, interactive markdown reports
-# I want to replicate this so I can generate results rapidly
+# Compiling the resulsts for a single dataset
 
-source(file.path(base_path, "Scripts", "PlottingFunctions.R"))
-if (1 == 1) { # change this to be some more helpful condition later lol
-  tryCatch({
-    # Define the output directory and file
-    output_dir <- file.path(base_path, "Output", species)
-    output_file <- paste0(species, "_compare_smoothing.html")
-    
-    # Knit the r markdown file as an HTML report (has the least errors/dependencies compared to other types of knits)
-    rmarkdown::render(
-      input = file.path(base_path, "Scripts", "Comparisons", "ComparingSmoothingReport.Rmd"),
-      output_format = "html_document",
-      output_file = output_file,  # File name only
-      output_dir = output_dir,   # Directory for saving the file
-      params = list( # these are the things I'm going to feed in to change report
-        base_path = base_path,
-        species = species
-      )
-    )
-    
-    # Success message with full path
-    message("Comparison report saved to: ", file.path(output_dir, output_file))
-  }, error = function(e) {
-    message("Error in making the comparison report: ", e$message)
-    stop()
-  })
-}
+metrics_list <- list.files(
+  file.path(base_path, "Output", species),
+  pattern = "_performance_.*\\.csv$",
+  full.names = TRUE
+)
+
+metrics <- lapply(metrics_list, function(file) {
+  fread(file) %>%
+    mutate(smoothing_type = basename(file),
+           rep_id = str_split(tools::file_path_sans_ext(basename(file)), "_")[[1]][3]) %>%
+    rename(Activity = 1) # rename to Activity in all cases
+})
+
+# remove Class: from the Activity and .csv from the smoothing_type
+metrics <- rbindlist(metrics) %>%
+  mutate(
+    Activity = gsub("Class: ", "", Activity), ## also change this between activity and behaviour
+    smoothing_type = gsub("_performance_.*\\.csv$", "", smoothing_type)
+  ) %>%
+  select(!Prevelance) %>%
+  na.omit()
+
+metrics <- metrics %>% 
+  mutate(smoothing_type = gsub("Smoothing", "", smoothing_type))
+
+# add levels so its easier to plot later
+metrics$smoothing_type <- factor(metrics$smoothing_type, levels = c("No", "Mode", "Duration", "Transition", "HMM", "Bayesian"))
+
+metrics_long <- metrics %>%
+  pivot_longer(cols = c(Precision, Recall, F1, Accuracy),
+               names_to = "Metric",
+               values_to = "Score")
+
+fwrite(metrics_long, file.path(base_path, "Output", species, "all_smoothed_metrics.csv"))

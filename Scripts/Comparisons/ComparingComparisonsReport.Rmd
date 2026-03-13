@@ -54,33 +54,70 @@ min(means$Score)
 ## Overall effect
 Firstly I'll look at how much improvement there was overall (across all datasets)
 ```{r Stats on the overall effect}
-df <- data %>% dplyr::filter(Activity == "Macro-Average", Metric == "F1")
-# and also do it as relative from the control
-# Get NoSmoothing scores by Species
+# have added in all of Dave's stats corrections. Thank you Dave!!!! Explanatory comments mostly his below.
+
+data <- fread(file.path(base_path, "Output", "collated_performance.csv")) # performance
+stat_file <- fread(file.path(base_path, "Output", "All_sequence_stats.csv")) # stats about the training data
+full_df <- merge(data, stat_file, by = "Species")
+
+df <- full_df %>% filter(Activity == "Macro-Average", Metric == "F1")
 baseline <- df %>%
   filter(smoothing_type == "No") %>%
   select(Species, rep_id, baseline = Score)
-
-df_rel <- df %>%
+df <- df %>%
   left_join(baseline, by = c("Species", "rep_id")) %>%
-  mutate(relative_change = Score - baseline)
+  mutate(relative_change = Score - baseline,
+         sp_rep = str_c(Species, "_", rep_id), #*** Reusing factor levels in random effects can cause issues, so I create unique factor levels...
+         smoothing_type = factor(smoothing_type, levels = c("No", "Mode", "Duration", "Transition", "HMM", "Bayesian")), #*** do this in the code flow...
+         across(where(is.character), as.factor)) #*** I'd make everything that is still character into a factor, too
 
-# do some stats here (note that No is set to the reference level)
+# remove no
+df1 <- filter(df, smoothing_type != "No") %>%  #*** New df without "No"
+  mutate(smoothing_type = fct_drop(smoothing_type)) # Drop unused factor levels
 
-# v1: what I thought was right
-simple_model <- lmer(relative_change ~ smoothing_type + (1|Species/rep_id), data = df_rel)
-summary(simple_model)
-# yay significant results
+m1 <- glmmTMB(relative_change ~ smoothing_type + (1|Species/sp_rep), data = df1)
+summary(m1) #*** `Mode` is now the base case, and all other estimates are adjustments relative to that. To get adjustments relative to zero, just remove the intercept.
+m1.2 <- update(m1, ~. -1) #*** the `-1` removes the intercept
+summary(m1.2)
 
-# v2: what Dave suggested
-dave_model <- lmer(relative_change ~ smoothing_type * Species + (1|rep_id), data = df_rel)
-summary(dave_model)
-# frighteningly... bayesian isnt significant anymore... oh no... this is bad news for me
 ```
+And a plot that shows the main effects averaged over the random effects.
+```{r fig.width = 8, fig.height = 4}
+DHARMa::simulateResiduals(m1.2, plot = TRUE) #*** The diagnostics are horrible, at least for Normality...I don't know how we could fix those, though...given the data we have...maybe we just rely on the robustness of the method
+
+#*** If you wanted an overall plot that illustrates the results for the fixed effects averaged over the random effects (mirroring your summary table)
+library(marginaleffects)
+group_preds <- predictions(m1.2,
+                           re.form = NA) %>%   # Includes fixed + random effects
+  as_tibble()
+
+overall_plot <- ggplot(group_preds,
+       aes(x = smoothing_type,
+           y = estimate,
+           colour = smoothing_type)) +
+  geom_errorbar(aes(ymin = conf.low,
+                    ymax = conf.high),
+                width = .05) +
+  geom_point(size = 5) +
+  geom_hline(yintercept = 0,
+             linetype = "dashed",
+             colour = "red") +
+  labs(x = "Smoothing Type",
+       y = "Mean change in F1 (relative to No smoothing)") +
+  my_theme() +
+  scale_colour_manual(values = my_colours) +
+  theme(legend.position = "none")
+
+overall_plot
+ggsave(file.path(base_path, "Output", "Overall_effects.png"), overall_plot,
+       width = 8, height = 4, units = "in")
+```
+
+And looking at the per-species breakdown?
 
 ```{r plots on the overall effect, fig.width = 8, fig.height = 8}
 # Summarise mean and 95% CI
-summary_df <- df_rel %>%
+summary_df <- df1 %>%
   group_by(Species, smoothing_type) %>%
   summarise(
     n = n(),
@@ -90,7 +127,7 @@ summary_df <- df_rel %>%
     .groups = "drop"
   )
 # this is 0 every time, so replace with a flat line for visually cleaner
-ggplot(summary_df %>% dplyr::filter(!smoothing_type == "No"),
+species_plot <- ggplot(summary_df %>% dplyr::filter(!smoothing_type == "No"),
        aes(x = smoothing_type,
            y = mean_rel,
            colour = smoothing_type)) +
@@ -106,34 +143,11 @@ ggplot(summary_df %>% dplyr::filter(!smoothing_type == "No"),
        fill = "Smoothing Type") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         legend.position = "none") +
-  facet_wrap(~Species, ncol = 3)
-```
+  facet_wrap(~Species, ncol = 5)
 
-## Within species
-Breaking it down and looking at each species individually.
-```{r stats on the individual species}
-# per species
-species <- unique(df_rel$Species)
-all_stats <- data.frame()
-for (x in species){
-  dat <- df_rel %>% dplyr::filter(Species == x)
-  mod <- lm(
-    relative_change ~ smoothing_type + (1 | rep_id), # when I removed the 0+ the sigificant dissapeared 0_0
-    data = dat
-  )
-
-  stats <- as.data.frame(summary(mod)$coefficients)
-  stats$Species <- x
-  stats$sig <- ifelse(stats$`Pr(>|t|)` < 0.05, TRUE, FALSE)
-  stats$smoothing_type <- gsub("smoothing_type", "", rownames(stats))
-  
-  all_stats <- rbind(all_stats, stats)
-}
-
-fwrite(all_stats, file.path(base_path, "Output", "WithinSpeciesStats.csv"))
-
-sig_stats <- all_stats %>% dplyr::filter(sig == TRUE)
-sig_stats
+species_plot
+ggsave(file.path(base_path, "Output", "Species_effects.png"), species_plot,
+       width = 8, height = 8, units = "in")
 ```
 
 ##  Finding covariates to explain variation
@@ -144,34 +158,31 @@ full_df <- merge(df_rel, stat_file, by = "Species")
 ```
 
 ```{r some stats}
-# scale everything so one variable doesnt have much bigger effect
-full_df <- full_df %>%
+
+df <- full_df %>% #*** Updated to remove "No"
+  filter(smoothing_type != "No") %>%
   mutate(across(
     c(mean_transitions, total_transitions, Num_Activities),
     ~ scale(.x, center = TRUE, scale = TRUE)[,1]
   ))
 
-full_model <- lmer(
-  relative_change ~
-    smoothing_type * Species *
-      (mean_transitions +
-       multi_behaviour +
-       Num_Activities) +
-    (1 | rep_id),
-  data = full_df,
-  REML = FALSE
-)
+null_m <- glmmTMB(relative_change ~ -1 + smoothing_type + (1|Species/rep_id), data = df)
 
-model_null <- lmer(
-  relative_change ~ smoothing_type +
-    (1 | Species / rep_id),
-  data = full_df, REML = FALSE
-)
+m3 <- glmmTMB(relative_change ~ -1 + smoothing_type +
+                    mean_transitions + multi_behaviour + Num_Activities +
+                    (1|Species/rep_id), data = df)
 
-anova(model_null, full_model)
-summary(full_model)
+anova(null_m, m3)
+r.squaredGLMM(m3)
 
-library(MuMIn)
-r.squaredGLMM(full_model)
+summary(m3)
+
+
+# but maybe I should be looking at the interactions between those variables
+m4 <- glmmTMB(relative_change ~ smoothing_type *
+                (mean_transitions + multi_behaviour + Num_Activities) +
+                (1|Species/rep_id), data = df)
+anova(m3, m4)
+summary(m4)
 
 ```
