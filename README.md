@@ -6,7 +6,7 @@ In animal accelerometer-based behavioural classification research, the majority 
 The following workflow was designed to build predictive models, apply smoothing methods to raw predictions, and assess their ecological utility.
 
 ## Data
-The included data was pre-formatted from the original data sourced from online repos into standardised format in alternate github repository: [https://github.com/OakAlice/DataReformatting](https://github.com/OakAlice/DataReformatting). The koala data used in the case-study was sourced from collaboration with Gabriella Sparkes. Data originally analysed as part of [Between the Trees: Quantifying Koala Ground Movement for Conservation Action](https://www.mdpi.com/2076-2615/15/24/3537).
+The included data was pre-formatted from the original data sourced from online repos into standardised format in alternate github repository: [Temporarily redacted for anonymisation purposes]. The koala data used in the case-study was sourced from a collaborator. Data originally analysed as part of [Between the Trees: Quantifying Koala Ground Movement for Conservation Action](https://www.mdpi.com/2076-2615/15/24/3537).
 
 ## Repository Structure
 Repo is split into a few major sections.
