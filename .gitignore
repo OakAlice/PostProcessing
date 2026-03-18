@@ -6,11 +6,14 @@ CaseStudy/
 
 # leave one example of data
 /Data/*
-!/Data/Ferdinandy_Dog/
-!/Data/Ferdinandy_Dog/**
+!/Data/Sparkes_Koala/
+!/Data/Sparkes_Koala/**
+
+/Output/*
+!/Output/Sparkes_Koala/
+!/Output/Sparkes_Koala/**
 
 # put in the output sheets
-/Output/*
 !/Output/All_sequence_stats.csv
 !/Output/collated_performance.csv
 !/Output/WithinSpeciesStats.csv

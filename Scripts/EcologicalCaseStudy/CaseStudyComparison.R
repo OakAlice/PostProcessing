@@ -153,7 +153,7 @@ make_smoothing_plot <- function(smoothed_files, output_name) {
   )
 }
 
-target_activity <- "Foraging"
+target_activity <- "Locomotion"
 species <- "Sparkes_Koala"
 
 # Unlabelled data ---------------------------------------------------------

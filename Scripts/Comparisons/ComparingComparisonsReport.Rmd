@@ -48,6 +48,8 @@ print("best performance")
 max(means$Score)
 print("worst performance")
 min(means$Score)
+print("mean performance")
+mean(means$Score)
 
 ```
 
@@ -149,6 +151,61 @@ species_plot
 ggsave(file.path(base_path, "Output", "Species_effects.png"), species_plot,
        width = 8, height = 8, units = "in")
 ```
+
+And expressing these as % performance changes instead...
+```{r}
+percent_changes <- df %>%
+  mutate(percent_change = (relative_change * 100) / baseline) %>%
+  group_by(Species, smoothing_type) %>%
+  summarise(
+    n = n(),
+    mean_percent_change = mean(percent_change, na.rm = TRUE),
+    se = sd(percent_change, na.rm = TRUE) / sqrt(n),
+    ci = 1.96 * se, # gives us the confidence intervals (i think)
+    .groups = "drop"
+  )
+
+species_plot2 <- ggplot(percent_changes %>% dplyr::filter(smoothing_type != "No"),
+       aes(x = smoothing_type,
+           y = mean_percent_change,
+           colour = smoothing_type)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = mean_percent_change - ci,
+                    ymax = mean_percent_change + ci),
+                width = 0.5) +
+  geom_hline(yintercept = 0, linetype = "dotted", colour = "black") +
+  my_theme() +
+  scale_colour_manual(values = my_colours) +
+  labs(x = "Smoothing Type",
+       y = "Percentage change to the F1 Score",
+       fill = "Smoothing Type") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none") +
+  facet_wrap(~Species, ncol = 5)
+
+species_plot2
+ggsave(file.path(base_path, "Output", "Species_effects_percent.png"), species_plot2,
+       width = 8, height = 8, units = "in")
+
+
+max(percent_changes$mean_percent_change)
+min(percent_changes$mean_percent_change)
+percent_changes %>% dplyr::filter(smoothing_type == "Bayesian") %>% summarise(mean(mean_percent_change))
+
+
+percent_changes1 <- df %>%
+  mutate(percent_change = (relative_change * 100) / baseline) %>%
+  dplyr::filter(smoothing_type != "No") %>%  
+  mutate(smoothing_type = fct_drop(smoothing_type))
+
+m3 <- glmmTMB(percent_change ~ smoothing_type + (1|Species/sp_rep), data = percent_changes1)
+summary(m3)
+m3.2 <- update(m3, ~. -1) #*** the `-1` removes the intercept
+summary(m3.2)
+
+```
+
+
 
 ##  Finding covariates to explain variation
 Why are some datasets affected while others aren't? Does it have something to do with sequence stats in the training data?
