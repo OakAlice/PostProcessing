@@ -2,7 +2,7 @@
 # sourcing for experiments
 set.seed(1000)
 
-base_path <- "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/PostProcessing"
+base_path <- "C:/Users/oaw001/OneDrive - University of the Sunshine Coast/02.PostProcessing"
 # base_path <- "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
 
 #install.packaged("pacman")
@@ -77,7 +77,10 @@ for (species in all_species){
    ID = unique_IDs,
    group = sample(rep(1:3, length.out = length(unique_IDs)))
   )
-
+  
+  class_counts <- data %>% count(Activity)
+  fwrite(class_counts, file.path(base_path, "Data", species, "Class_counts.csv"))
+  
   for (i in 1:3){
    print(i)
    # define the test IDs for this round

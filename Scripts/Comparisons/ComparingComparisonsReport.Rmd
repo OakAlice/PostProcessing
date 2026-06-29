@@ -8,12 +8,30 @@ params:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, fig.width = 8, fig.height = 5)
+
+
+# note. #*** comments are from Dave
 ```
 
 This is the report to compare the comparisons between the species datasets.
 
 ```{r bind, include = FALSE}
 # Firstly, loading in the individual files and creating the collated performance file
+
+if(!file.exists(file.path(base_path, "Data", "Class_counts.csv"))){
+  counts <- list()
+  for (species in all_species){
+    species <- basename(species)
+    data <- fread(file.path(base_path, "Data", species, "Class_counts.csv"))
+    data$Species <- species
+    counts[[species]] <- data
+  }
+  counts <- rbindlist(counts, fill = TRUE)
+  fwrite(counts, file.path(base_path, "Data", "Class_counts.csv"))
+} else {
+  counts <- fread(file.path(base_path, "Data", "Class_counts.csv"))
+}
+
 
 # base_path <- "C:/Users/PC/OneDrive - University of the Sunshine Coast/PostProcessing"
 files <- list.files(file.path(base_path, "Output"), pattern = "all_smoothed_metrics.csv", full.names = TRUE, recursive = TRUE)
@@ -81,8 +99,9 @@ m1 <- glmmTMB(relative_change ~ smoothing_type + (1|Species/sp_rep), data = df1)
 summary(m1) #*** `Mode` is now the base case, and all other estimates are adjustments relative to that. To get adjustments relative to zero, just remove the intercept.
 m1.2 <- update(m1, ~. -1) #*** the `-1` removes the intercept
 summary(m1.2)
-
 ```
+
+
 And a plot that shows the main effects averaged over the random effects.
 ```{r fig.width = 8, fig.height = 4}
 DHARMa::simulateResiduals(m1.2, plot = TRUE) #*** The diagnostics are horrible, at least for Normality...I don't know how we could fix those, though...given the data we have...maybe we just rely on the robustness of the method
@@ -136,8 +155,10 @@ species_plot <- ggplot(summary_df %>% dplyr::filter(!smoothing_type == "No"),
   geom_point(size = 3) +
   geom_errorbar(aes(ymin = mean_rel - ci,
                     ymax = mean_rel + ci),
-                width = 0.5) +
-  geom_hline(yintercept = 0, linetype = "dotted", colour = "black") +
+                width = 0.5, linewidth = 1) +
+  geom_hline(yintercept = 0,
+             linetype = "dashed",
+             colour = "red") +
   my_theme() +
   scale_colour_manual(values = my_colours) +
   labs(x = "Smoothing Type",
@@ -206,17 +227,12 @@ summary(m3.2)
 ```
 
 
-
 ##  Finding covariates to explain variation
 Why are some datasets affected while others aren't? Does it have something to do with sequence stats in the training data?
-```{r extracting stat data}
-stat_file <- fread(file.path(base_path, "Output", "All_sequence_stats.csv"))
-full_df <- merge(df_rel, stat_file, by = "Species")
-```
 
 ```{r some stats}
 
-df <- full_df %>% #*** Updated to remove "No"
+df <- df1 %>% #*** Updated to remove "No"
   filter(smoothing_type != "No") %>%
   mutate(across(
     c(mean_transitions, total_transitions, Num_Activities),
@@ -231,6 +247,8 @@ m3 <- glmmTMB(relative_change ~ -1 + smoothing_type +
 
 anova(null_m, m3)
 r.squaredGLMM(m3)
+
+AIC(null_m, m3)
 
 summary(m3)
 

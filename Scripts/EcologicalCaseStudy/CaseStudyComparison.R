@@ -86,6 +86,12 @@ make_smoothing_plot <- function(smoothed_files, output_name) {
   behavioural_plotdt$smoothing <- factor(behavioural_plotdt$smoothing, 
                                          levels = c("No", "Mode", "Duration", "Transition", "HMM", "Bayesian"))
   
+  # only select ones with enough data
+  if (output_name == "Labelled"){
+     behavioural_plotdt <- behavioural_plotdt %>% 
+    dplyr::filter(ID %in% c("Elsa", "Hardy", "Meeka", "Nicole"))
+  }
+ 
   # Add true labels as separate "smoothing" level
   if ("true_class" %in% colnames(behavioural_plotdt)){
     true_classes <- behavioural_plotdt %>%
@@ -209,9 +215,21 @@ dt <- lapply(labelled_files, function(x) {
 dt <- rbindlist(dt)
 dt <- as.data.frame(dt)
 
+
+# making the true class column
+true_classes <- dt %>%
+    dplyr::filter(smoothing_type == "No") %>% 
+    dplyr::select(ID, Time, true_class) %>% 
+    dplyr::mutate(
+      smoothed_class = true_class,
+      smoothing = "TrueClass"
+    )
+  
 dt$smoothing_type <-factor(dt$smoothing_type,
                            levels = c("TrueClass", "No", "Mode", "Duration", "Transition", "HMM", "Bayesian")
 )
+dt <- dt %>% 
+  dplyr::filter(ID %in% c("Elsa", "Hardy", "Meeka", "Nicole"))
 
 budget <- dt %>% 
   group_by(ID, smoothed_class, smoothing_type) %>%
