@@ -1,7 +1,5 @@
 # Post-Processing
-In animal accelerometer-based behavioural classification research, the majority of the attention has been placed on the collection of the data and the building of the models with relatively little attention given to what to do with the data once we have it. In this project, we use information inherent in the training data (sequential order of behavioural observation) to place predictions in context and account for classifier error. The idea is similar to that which is already used widely in speech-to-text recognition (example below).
-
-![The concept behind post-processing](post_processing_idea_langauge.png)
+In animal accelerometer-based behavioural classification research, the majority of the attention has been placed on the collection of the data and the building of the models with relatively little attention given to what to do with the data once we have it. In this project, we use information inherent in the training data (sequential order of behavioural observation) to place predictions in context and account for classifier error. The idea is similar to that which is already used widely in speech-to-text recognition.
 
 The following workflow was designed to build predictive models, apply smoothing methods to raw predictions, and assess their ecological utility.
 
@@ -22,3 +20,6 @@ Repo is split into a few major sections.
     - Markdowns for undertaking statstical comparisons of the effect of the post-processing methods
   - **EcologicalCaseStudy/**
     - Use the post-processing methods in an applied case-study to determine the downstream effects of post-processing on answering ecological questions
+
+## Questions
+For questions and updates, please contact me at oakleigh.wilson05[at]gmail.com
